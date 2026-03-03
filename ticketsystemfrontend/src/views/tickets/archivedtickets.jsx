@@ -22,7 +22,6 @@ export default function ArchivedTickets() {
     const [currentPage, setCurrentPage] = useState(1);
     const ticketsPerPage = 10;
 
-
     const navigate = useNavigate();
 
     //Fetch user information from local storage
@@ -33,27 +32,36 @@ export default function ArchivedTickets() {
 
     //Fetch all tickets
     useEffect(() => {
-        const user = JSON.parse(localStorage.getItem('user'));
-        axios.get(`${config.baseApi}/ticket/get-all-ticket`)
-            .then((res) => {
+        try {
+            const user = JSON.parse(localStorage.getItem('user'));
+            axios.get(`${config.baseApi}/ticket/get-all-ticket`)
+                .then((res) => {
 
-                const archived = res.data.filter(ticket => ticket.is_active === false)
-                console.log(archived)
-                setAllTicket(archived);
-            });
+                    const archived = res.data.filter(ticket => ticket.is_active === false)
+                    console.log(archived)
+                    setAllTicket(archived);
+                });
 
-        if (user.emp_location) {
-            setEmpLocation(user.emp_location);
-            setFilterLocation(user.emp_location);   // auto-apply filter
+            if (user.emp_location) {
+                setEmpLocation(user.emp_location);
+                setFilterLocation(user.emp_location);   // auto-apply filter
+            }
+        } catch (err) {
+            console.log('Unable to get all archive: ', err);
         }
+
     }, []);
 
     //Fetch all users
     useEffect(() => {
-        axios.get(`${config.baseApi}/authentication/get-all-users`)
-            .then((res) => {
-                setAllUsers(res.data);
-            });
+        try {
+            axios.get(`${config.baseApi}/authentication/get-all-users`)
+                .then((res) => {
+                    setAllUsers(res.data);
+                });
+        } catch (err) {
+            console.log('Unable to get all users: ', err)
+        }
     }, []);
 
     //Assigned to display tickets per role
@@ -106,6 +114,7 @@ export default function ArchivedTickets() {
         return matchesSearch && matchesStatus && matchesLocation && matchesDate;
     });
 
+    //Ascending and desending 
     const sortedTickets = [...filteredTickets].sort((a, b) => {
         const dateA = new Date(a.created_at || a.date_created || a.date); // adjust based on your DB column
         const dateB = new Date(b.created_at || b.date_created || b.date);
@@ -144,8 +153,8 @@ export default function ArchivedTickets() {
                 style = { ...baseStyle, backgroundColor: '#033f00ff', color: '#ffffffff' }; label = 'In Progress'; break;
             case 'assigned':
                 style = { ...baseStyle, backgroundColor: '#ffcb5aff', color: '#404040ff' }; label = 'Assigned'; break;
-            case 'escalate':
-                style = { ...baseStyle, backgroundColor: '#ff7d7dff', color: '#404040ff' }; label = 'Escalated'; break;
+            // case 'escalate':
+            //     style = { ...baseStyle, backgroundColor: '#ff7d7dff', color: '#404040ff' }; label = 'Escalated'; break;
             case 'resolved':
                 style = { ...baseStyle, backgroundColor: '#91c6ffff', color: '#404040ff' }; label = 'Resolved'; break;
             case 're-opened':
@@ -206,7 +215,6 @@ export default function ArchivedTickets() {
     };
 
     return (
-
         <Container
             style={{
                 padding: '20px',
@@ -260,14 +268,13 @@ export default function ArchivedTickets() {
                             <option value="open">Open</option>
                             <option value="assigned">Assigned</option>
                             <option value="in-progress">In Progress</option>
-                            <option value="escalate">Escalated</option>
+                            {/* <option value="escalate">Escalated</option> */}
                             <option value="resolved">Resolved</option>
                             <option value="re-opened">Re-opened</option>
                             <option value="closed">Closed</option>
                         </Form.Select>
                     </Form.Group>
                 </div>
-
 
                 {/* Location Filter */}
                 <div style={{ flex: "0 1 160px" }}>
@@ -349,19 +356,17 @@ export default function ArchivedTickets() {
                 </div>
             </div>
 
-
-
             {/* Desktop Table */}
             <div className="d-none d-md-block" >
                 <table className="table mb-0 table-hover align-middle" >
                     <thead style={{ fontSize: '14px', textTransform: 'uppercase', color: '#555', background: '#f8f9fa' }}>
                         <tr>
-                            <th>Ticket #</th>
+                            <th>Ticket ID</th>
+                            <th>Created at</th>
                             <th>Problem/Issue</th>
-                            <th>Type</th>
-                            <th>Status</th>
-                            <th>Urgency</th>
+                            <th>Assigned to</th>
                             <th>Description</th>
+                            <th>Status</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -381,14 +386,13 @@ export default function ArchivedTickets() {
                                     className="table-row-hover"
                                 >
                                     <td>{ticket.ticket_id}</td>
+                                    <td>{new Date(ticket.created_at).toLocaleString()}</td>
                                     <td>{ticket.ticket_subject}</td>
-                                    <td>{ticket.ticket_type === null || ticket.ticket_type === "" ? "NONE" : ticket.ticket_type}</td>
-
-                                    <td>{renderStatusBadge(ticket.ticket_status)}</td>
-                                    <td>{renderUrgencyBadge(ticket.ticket_urgencyLevel) || ''}</td>
+                                    <td>{ticket.assigned_to || '-'}</td>
                                     <td style={{ maxWidth: 200, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                         {ticket.Description}
                                     </td>
+                                    <td>{renderStatusBadge(ticket.ticket_status)}</td>
                                     <td style={{ color: '#003006ff', fontWeight: 500 }}>View</td>
                                 </tr>
                             ))
@@ -417,7 +421,7 @@ export default function ArchivedTickets() {
                             <Card.Body>
                                 <div style={{ fontWeight: 600, fontSize: '16px', marginBottom: 4 }}>#{ticket.ticket_id}</div>
                                 <div><strong>Problem/Issue:</strong> {ticket.ticket_subject}</div>
-                                <div><strong>Type:</strong> {ticket.ticket_type}</div>
+                                {/* <div><strong>Type:</strong> {ticket.ticket_type}</div> */}
                                 <div><strong>Status:</strong> {renderStatusBadge(ticket.ticket_status)}</div>
                                 <div><strong>Urgency:</strong> {renderUrgencyBadge(ticket.ticket_urgencyLevel)}</div>
                                 <div style={{ marginBottom: 4 }}><strong>Description:</strong> {ticket.Description}</div>

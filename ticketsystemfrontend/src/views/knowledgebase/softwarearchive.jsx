@@ -24,14 +24,15 @@ export default function SoftwareArchive() {
     const [access, setAccess] = useState(false)
     const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        if (loading) {
-            const timer = setTimeout(() => {
-                setLoading(false);
-            }, 2000);
-            return () => clearTimeout(timer)
-        }
-    }, [loading])
+    //Loading state 2s
+    // useEffect(() => {
+    //     if (loading) {
+    //         const timer = setTimeout(() => {
+    //             setLoading(false);
+    //         }, 2000);
+    //         return () => clearTimeout(timer)
+    //     }
+    // }, [loading])
 
     // Check user access
     useEffect(() => {
@@ -64,7 +65,7 @@ export default function SoftwareArchive() {
                 if (all.data && Array.isArray(all.data)) {
                     setFaqData(
                         all.data
-                            .filter(item => item.is_active === false && item.kb_category === "software")
+                            .filter(item => item.is_active === false && item.kb_category === "application")
                             .map(item => ({
                                 id: item.kb_id,
                                 question: item.kb_title,
@@ -79,14 +80,15 @@ export default function SoftwareArchive() {
         };
         fetchData();
     }, []);
-    const handleUnArchive = async (id) => {
 
+    //Un-Archive Component
+    const handleUnArchive = async (id) => {
         try {
             setLoading(true)
             const empInfo = JSON.parse(localStorage.getItem("user"));
             await axios.post(`${config.baseApi}/knowledgebase/un-archive-knowledgebase`, { kb_id: id, updated_by: empInfo.user_name })
 
-            setSuccess("Software troubleshooting step archived successfully");
+            setSuccess("Application troubleshooting step archived successfully");
             window.location.reload();
 
         } catch (err) {
@@ -104,22 +106,24 @@ export default function SoftwareArchive() {
         }
     }, [showModal]);
 
+    // Delete Function
     const handleDelete = async (id) => {
         const empInfo = JSON.parse(localStorage.getItem("user"));
         if (window.confirm("Are you sure you want to delete ?")) {
             try {
                 setLoading(true)
                 await axios.post(`${config.baseApi}/knowledgebase/delete-knowledgebase`, { kb_id: id, updated_by: empInfo.user_name });
-                setSuccess("Software troubleshooting step deleted successfully");
+                setSuccess("Application troubleshooting step deleted successfully");
                 window.location.reload(); // Reload to reflect changes
             } catch (err) {
-                console.error("Error deleting Software troubleshooting step:", err);
+                console.error("Error deleting Application troubleshooting step:", err);
                 setLoading(false)
-                setError("Failed to delete Software troubleshooting step.");
+                setError("Failed to delete application troubleshooting step.");
             }
         }
     }
 
+    //Update Function
     const handleUpdate = async () => {
 
         if (newTitle === '') {
@@ -140,7 +144,7 @@ export default function SoftwareArchive() {
                 })
 
                 setEditMode(false);
-                setSuccess("Software updated successfully");
+                setSuccess("Application updated successfully");
                 setNewTitle("");
                 setNewContent("");
                 setShowModal(false);
@@ -151,8 +155,9 @@ export default function SoftwareArchive() {
         }
     }
 
+    //Add Function
     const handleSave = async () => {
-        console.log("Saving Software:", newTitle, newContent);
+        console.log("Saving Application:", newTitle, newContent);
         if (newTitle === '') {
             setLoading(false)
             setError("Please fill in title.");
@@ -167,11 +172,11 @@ export default function SoftwareArchive() {
                     kb_title: newTitle,
                     kb_desc: newContent,
                     created_by: empInfo.user_name,
-                    kb_category: "software"
+                    kb_category: "application"
                 });
-                setSuccess("Software saved successfully");
+                setSuccess("Application saved successfully");
             } catch (err) {
-                console.error("Error saving Software:", err);
+                console.error("Error saving Application:", err);
             }
 
             setFaqData([...faqData, { question: newTitle, answer: newContent }]);
@@ -184,6 +189,7 @@ export default function SoftwareArchive() {
         }
     };
 
+    //Format and style on the input field
     const handleContentChange = () => {
         setNewContent(contentRef.current.innerHTML);
     };
@@ -212,6 +218,7 @@ export default function SoftwareArchive() {
                 paddingBottom: '20px',
             }}
         >
+            {/* Alert Function */}
             {error && (
                 <div className="position-fixed start-50 translate-middle-x" style={{ top: '100px', zIndex: 9999, minWidth: '300px' }}>
                     <Alert variant="danger" onClose={() => setError('')} dismissible>{error}</Alert>
@@ -225,10 +232,11 @@ export default function SoftwareArchive() {
             <Container>
                 <Card className="p-4 shadow-lg" style={{ borderRadius: "20px", backgroundColor: "#fff" }}>
                     <div className="d-flex justify-content-between align-items-center mb-3">
-                        <h2 className="fw-bold text-dark mb-0">Archived Software Questions</h2>
+                        <h2 className="fw-bold text-dark mb-0">Archived Application Questions</h2>
+                        {/* Button */}
                         {access && (
                             <div className="d-flex gap-2">
-                                <Button variant="primary" onClick={() => navigate('/software')}>Software</Button>
+                                <Button variant="primary" onClick={() => navigate('/application')}>Application</Button>
                             </div>
                         )}
                     </div>
@@ -238,7 +246,7 @@ export default function SoftwareArchive() {
                     <Accordion defaultActiveKey={0} flush>
                         {faqData.length === 0 ? (
                             <div className="text-center text-muted py-3">
-                                No archived software articles found
+                                No archived Application articles found
                             </div>
                         ) : (
                             faqData.map((faq, index) => (
@@ -322,10 +330,10 @@ export default function SoftwareArchive() {
                 </Card>
             </Container>
 
-            {/* Modal */}
+            {/* Modal for Edit || Add */}
             <Modal show={showModal} onHide={() => setShowModal(false)} size="lg" centered>
                 <Modal.Header >
-                    <Modal.Title>{editMode ? 'Edit Software Troubleshooting Step' : 'Add Software Troubleshooting Step'}</Modal.Title>
+                    <Modal.Title>{editMode ? 'Edit application Troubleshooting Step' : 'Add application Troubleshooting Step'}</Modal.Title>
 
                 </Modal.Header>
                 <Modal.Body>
@@ -388,6 +396,7 @@ export default function SoftwareArchive() {
                 </Modal.Footer>
             </Modal>
 
+            {/* Loading Component */}
             {loading && (
                 <div
                     style={{

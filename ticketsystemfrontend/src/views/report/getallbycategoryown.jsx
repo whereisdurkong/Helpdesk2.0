@@ -12,19 +12,20 @@ import {
     Legend
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
-
+import { useNavigate } from 'react-router';
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 export default function GetAllByCategoryOwn({ filterType, showChart = true, location, onDataReady, helpdesk }) {
     const [chartData, setChartData] = useState(null);
     const [hardwareTickets, setHardwareTickets] = useState([]);
     const [networkTickets, setNetworkTickets] = useState([]);
-    const [softwareTickets, setSoftwareTickets] = useState([]);
+    const [applicationTickets, setapplicationTickets] = useState([]);
     const [systemTickets, setSystemTickets] = useState([]);
-
+    const navigate = useNavigate();
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 5;
 
+    //Filter Function
     const isInFilter = (date) => {
         const d = new Date(date);
         const today = new Date();
@@ -62,6 +63,7 @@ export default function GetAllByCategoryOwn({ filterType, showChart = true, loca
         }
     };
 
+    //Get all tickets
     useEffect(() => {
         const fetch = async () => {
             try {
@@ -82,12 +84,12 @@ export default function GetAllByCategoryOwn({ filterType, showChart = true, loca
                 // Separate into categories
                 const hardware = tickets.filter(t => t.ticket_category?.toLowerCase() === "hardware");
                 const network = tickets.filter(t => t.ticket_category?.toLowerCase() === "network");
-                const software = tickets.filter(t => t.ticket_category?.toLowerCase() === "software");
+                const application = tickets.filter(t => t.ticket_category?.toLowerCase() === "application");
                 const system = tickets.filter(t => t.ticket_category?.toLowerCase() === "system");
 
                 setHardwareTickets(hardware);
                 setNetworkTickets(network);
-                setSoftwareTickets(software);
+                setapplicationTickets(application);
                 setSystemTickets(system);
 
                 // Chart setup
@@ -100,7 +102,7 @@ export default function GetAllByCategoryOwn({ filterType, showChart = true, loca
 
                         const hardwareCounts = Array(12).fill(0);
                         const networkCounts = Array(12).fill(0);
-                        const softwareCounts = Array(12).fill(0);
+                        const applicationCounts = Array(12).fill(0);
                         const systemCounts = Array(12).fill(0);
 
                         tickets.forEach(t => {
@@ -108,7 +110,7 @@ export default function GetAllByCategoryOwn({ filterType, showChart = true, loca
                             const category = t.ticket_category?.toLowerCase();
                             if (category === "hardware") hardwareCounts[monthIndex]++;
                             if (category === "network") networkCounts[monthIndex]++;
-                            if (category === "software") softwareCounts[monthIndex]++;
+                            if (category === "application") applicationCounts[monthIndex]++;
                             if (category === "system") systemCounts[monthIndex]++;
                         });
 
@@ -117,7 +119,7 @@ export default function GetAllByCategoryOwn({ filterType, showChart = true, loca
                             datasets: [
                                 { label: "Hardware", data: hardwareCounts, backgroundColor: "rgba(255,99,132,0.6)" },
                                 { label: "Network", data: networkCounts, backgroundColor: "rgba(54,162,235,0.6)" },
-                                { label: "Software", data: softwareCounts, backgroundColor: "rgba(75,192,192,0.6)" },
+                                { label: "Application", data: applicationCounts, backgroundColor: "rgba(75,192,192,0.6)" },
                                 { label: "System", data: systemCounts, backgroundColor: "rgba(75,192,192,0.6)" }
                             ]
                         });
@@ -128,19 +130,19 @@ export default function GetAllByCategoryOwn({ filterType, showChart = true, loca
                                 category: "All",
                                 hardware: hardwareCounts[i],
                                 network: networkCounts[i],
-                                software: softwareCounts[i],
+                                application: applicationCounts[i],
                                 system: systemCounts[i],
-                                total: hardwareCounts[i] + networkCounts[i] + softwareCounts[i] + systemCounts[i]
+                                total: hardwareCounts[i] + networkCounts[i] + applicationCounts[i] + systemCounts[i]
                             }));
                             onDataReady(summary);
                         }
                     } else {
                         setChartData({
-                            labels: ["Hardware", "Network", "Software", "System"],
+                            labels: ["Hardware", "Network", "Application", "System"],
                             datasets: [
                                 {
                                     label: "Tickets by Category",
-                                    data: [hardware.length, network.length, software.length, system.length],
+                                    data: [hardware.length, network.length, application.length, system.length],
                                     backgroundColor: [
                                         "rgba(255, 99, 132, 0.6)",
                                         "rgba(54, 162, 235, 0.6)",
@@ -155,7 +157,7 @@ export default function GetAllByCategoryOwn({ filterType, showChart = true, loca
                             const summary = [
                                 { category: "Hardware", count: hardware.length },
                                 { category: "Network", count: network.length },
-                                { category: "Software", count: software.length },
+                                { category: "application", count: application.length },
                                 { category: "System", count: system.length }
                             ];
                             onDataReady(summary);
@@ -169,6 +171,7 @@ export default function GetAllByCategoryOwn({ filterType, showChart = true, loca
         fetch();
     }, [filterType, showChart, location, helpdesk]);
 
+    //Render table
     const renderTable = (title, rows) => {
         const totalPages = Math.ceil(rows.length / itemsPerPage);
         const indexOfLastItem = currentPage * itemsPerPage;
@@ -177,7 +180,7 @@ export default function GetAllByCategoryOwn({ filterType, showChart = true, loca
 
         return (
             <div style={{ marginTop: "20px" }}>
-                {/* ✅ Title + Pagination in same row */}
+                {/* Title + Pagination in same row */}
                 <div className="d-flex justify-content-between align-items-center mb-2">
                     <h4 className="mb-0">{title}</h4>
                     {totalPages > 1 && (
@@ -207,7 +210,7 @@ export default function GetAllByCategoryOwn({ filterType, showChart = true, loca
                             <th>Ticket ID</th>
                             <th>Problem/Issue</th>
                             <th>Status</th>
-                            <th>Type</th>
+                            {/* <th>Type</th> */}
                             <th>Assigned To</th>
                             <th>For</th>
                         </tr>
@@ -216,12 +219,12 @@ export default function GetAllByCategoryOwn({ filterType, showChart = true, loca
                         {currentRows.map((t, idx) => (
                             <tr key={idx}
                                 style={{ cursor: "pointer" }}
-                                onClick={() => window.location.replace(`view-hd-ticket?id=${t.ticket_id}`)}
+                                onClick={() => navigate(`view-hd-ticket?id=${t.ticket_id}`)}
                             >
                                 <td>{t.ticket_id}</td>
                                 <td>{t.ticket_subject}</td>
                                 <td>{t.ticket_status}</td>
-                                <td>{t.ticket_type}</td>
+                                {/* <td>{t.ticket_type}</td> */}
                                 <td>{t.assigned_to || "-"}</td>
                                 <td>{t.ticket_for || "-"}</td>
                             </tr>
@@ -236,6 +239,7 @@ export default function GetAllByCategoryOwn({ filterType, showChart = true, loca
             </div>
         );
     };
+
     return (
         <div style={{ width: '100%', height: '100%' }}>
             {showChart && chartData && (
@@ -264,7 +268,7 @@ export default function GetAllByCategoryOwn({ filterType, showChart = true, loca
                 <>
                     {renderTable("Hardware Tickets", hardwareTickets)}
                     {renderTable("Network Tickets", networkTickets)}
-                    {renderTable("Software Tickets", softwareTickets)}
+                    {renderTable("Application Tickets", applicationTickets)}
                     {renderTable("System Tickets", systemTickets)}
                 </>
             )}

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from 'axios';
 import config from 'config';
-import { Card, Container, Form, Col, Row, Alert, Pagination } from "react-bootstrap";
+import { Card, Container, Form, Col, Row, Alert, Pagination, Modal, Button, Spinner } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 
 export default function Openticket() {
@@ -9,7 +9,6 @@ export default function Openticket() {
     const [userName, setUserName] = useState(null);
     const [tierGroup, setTiergroup] = useState('')
 
-    const [filterStatus, setFilterStatus] = useState('All');
     const [filterLocation, setFilterLocation] = useState('All');
     const [empLocation, setEmpLocation] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
@@ -21,8 +20,20 @@ export default function Openticket() {
     const [currentPage, setCurrentPage] = useState(1);
     const ticketsPerPage = 10;
 
+    const [showModal, setShowModal] = useState(false);
+    const [modalTitle, setModalTitle] = useState("");
+    const [modalContent, setModalContent] = useState(null);
+
+    const [error, setError] = useState('');
+    const [successful, setSuccessful] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const [selectedTicket, setSelectedTicket] = useState(null);
+    const [selectedNewStatus, setSelectedNewStatus] = useState(null);
+
     const navigate = useNavigate();
 
+    //getting user roles
     useEffect(() => {
         const user = JSON.parse(localStorage.getItem('user'));
         if (user) {
@@ -42,21 +53,21 @@ export default function Openticket() {
         }
     }, []);
 
+    //Get all open tickets
     useEffect(() => {
-
-
-        axios.get(`${config.baseApi}/ticket/get-all-ticket`)
-            .then((res) => {
-                const userTickets = res.data.filter(
-                    (ticket) => (ticket.ticket_status === tierGroup || ticket.ticket_status === 'open') && ticket.is_active === true
-                );
-                setAllTicket(userTickets);
-            })
-            .catch((err) => console.error("Error fetching tickets:", err));
-
-
+        try {
+            axios.get(`${config.baseApi}/ticket/get-all-ticket`)
+                .then((res) => {
+                    const userTickets = res.data.filter(
+                        (ticket) => (ticket.ticket_status === tierGroup || ticket.ticket_status === 'open') && ticket.is_active === true
+                    );
+                    setAllTicket(userTickets);
+                })
+                .catch((err) => console.error("Error fetching tickets:", err));
+        } catch (err) {
+            console.log('Unable to get all tickets: ', err)
+        }
     }, [tierGroup]);
-
 
     //-------------------STATUS DESIGN----------------------//
     const renderStatusBadge = (status) => {
@@ -90,10 +101,10 @@ export default function Openticket() {
                 style = { ...baseStyle, backgroundColor: '#ffcb5aff', color: '#404040ff' };
                 label = 'Assigned';
                 break;
-            case 'escalated':
-                style = { ...baseStyle, backgroundColor: '#ff7d7dff', color: '#404040ff' };
-                label = 'Escalated';
-                break;
+            // case 'escalated':
+            //     style = { ...baseStyle, backgroundColor: '#ff7d7dff', color: '#404040ff' };
+            //     label = 'Escalated';
+            //     break;
             case 'resolved':
                 style = { ...baseStyle, backgroundColor: '#91c6ffff', color: '#404040ff' };
                 label = 'Resolved';
@@ -157,6 +168,7 @@ export default function Openticket() {
         return <span style={style}>{label}</span>;
     };
 
+    //Filter Ticket
     const filteredTickets = allticket.filter((ticket) => {
 
         const ticketDate = new Date(ticket.created_at || ticket.date_created || ticket.date);
@@ -183,6 +195,7 @@ export default function Openticket() {
         return matchesSearch && matchesLocation && matchesDate;
     });
 
+    //Sort ascending to descending
     const sortedTickets = [...filteredTickets].sort((a, b) => {
         const dateA = new Date(a.created_at || a.date_created || a.date); // adjust based on your DB column
         const dateB = new Date(b.created_at || b.date_created || b.date);
@@ -195,13 +208,59 @@ export default function Openticket() {
     const currentTickets = sortedTickets.slice(indexOfFirstTicket, indexOfLastTicket);
     const totalPages = Math.ceil(sortedTickets.length / ticketsPerPage);
 
+    //Navigate to view ticket
     const HandleView = (ticket) => {
         const params = new URLSearchParams({ id: ticket.ticket_id })
         navigate(`/view-hd-ticket?${params.toString()}`)
     }
 
-    return (
+    //Handle status has changed
+    const handleStatusChange = async (ticket, newStatus) => {
+        console.log(ticket, newStatus)
+        const prevStat = ticket.ticket_status
 
+        setSelectedTicket(ticket);
+        setSelectedNewStatus(newStatus);
+
+        if (prevStat !== newStatus && newStatus === 'assigned') {
+            setModalTitle(`Ticket ID: ${ticket.ticket_id}`)
+            setModalContent(`Are you sure you want to "accept" this ticket?\n\nReminder: Leave a note before committing changes.`)
+            setShowModal(true)
+        } else {
+            setShowModal(false);
+        }
+    }
+
+    //Save Function
+    const handleUpdate = async () => {
+        const empInfo = JSON.parse(localStorage.getItem('user'));
+        const prevStat = selectedTicket.ticket_status
+
+        if (prevStat !== selectedNewStatus && selectedNewStatus === 'assigned') {
+            setLoading(true);
+            try {
+                await axios.post(`${config.baseApi}/ticket/update-ticket`, {
+                    ticket_id: selectedTicket.ticket_id,
+                    ticket_status: selectedNewStatus,
+                    assigned_to: empInfo.user_name,
+                    updated_by: empInfo.user_id
+                });
+
+                setSuccessful(`Succesfully accepted Ticket ID: ${selectedTicket.ticket_id}`);
+                setTimeout(() => {
+                    window.location.reload()
+                }, 2000)
+            } catch (err) {
+                setError('Unable to change status, please try again!')
+                console.log(err)
+            }
+        } else {
+            return;
+        }
+
+    }
+
+    return (
         <Container
             style={{
                 padding: '20px',
@@ -211,6 +270,28 @@ export default function Openticket() {
 
             }}
         >
+            {/* Alert Component */}
+            {error && (
+                <div
+                    className="position-fixed start-50 l translate-middle-x"
+                    style={{ top: '100px', zIndex: 9999, minWidth: '300px' }}
+                >
+                    <Alert variant="danger" onClose={() => setError('')} dismissible>
+                        {error}
+                    </Alert>
+                </div>
+            )}
+            {successful && (
+                <div
+                    className="position-fixed start-50 l translate-middle-x"
+                    style={{ top: '100px', zIndex: 9999, minWidth: '300px' }}
+                >
+                    <Alert variant="success" onClose={() => setSuccessful('')} dismissible>
+                        {successful}
+                    </Alert>
+                </div>
+            )}
+
             {/* Search and Filter */}
             <div
                 className="d-flex align-items-end gap-3 mb-4 flex-wrap"
@@ -309,19 +390,16 @@ export default function Openticket() {
                 </Form.Group>
             </div>
 
-
-
             {/* Desktop Table */}
             <div className="d-none d-md-block">
                 <table className="table mb-0 table-hover align-middle">
                     <thead style={{ fontSize: '14px', textTransform: 'uppercase', color: '#555', background: '#f8f9fa' }}>
                         <tr>
-                            <th>Ticket #</th>
+                            <th>Ticket ID</th>
+                            <th>Created At</th>
                             <th>Problem/Issue</th>
-                            <th>Type</th>
-                            <th>Status</th>
-                            <th>Urgency</th>
                             <th>Description</th>
+                            <th>Status</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -336,19 +414,33 @@ export default function Openticket() {
                             currentTickets.map((ticket, index) => (
                                 <tr
                                     key={index}
-                                    onClick={() => HandleView(ticket)}
+
                                     style={{ cursor: 'pointer', transition: 'background 0.2s' }}
                                     className="table-row-hover"
                                 >
-                                    <td>{ticket.ticket_id}</td>
-                                    <td>{ticket.ticket_subject}</td>
-                                    <td>{ticket.ticket_type}</td>
-                                    <td>{renderStatusBadge(ticket.ticket_status)}</td>
-                                    <td>{renderUrgencyBadge(ticket.ticket_urgencyLevel)}</td>
-                                    <td style={{ maxWidth: 200, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    <td onClick={() => HandleView(ticket)}>{ticket.ticket_id}</td>
+                                    <td onClick={() => HandleView(ticket)}>{new Date(ticket.created_at).toLocaleString()}</td>
+                                    <td onClick={() => HandleView(ticket)}>{ticket.ticket_subject}</td>
+                                    <td onClick={() => HandleView(ticket)} style={{ maxWidth: 200, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                         {ticket.Description}
                                     </td>
-                                    <td style={{ color: '#003006ff', fontWeight: 500 }}>View</td>
+                                    <td>
+                                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                            <Form.Select
+                                                value={ticket.ticket_status || ''}
+                                                onChange={(e) => handleStatusChange(ticket, e.target.value)}
+                                                style={{ width: 170, borderRadius: 8, fontSize: 13 }}
+                                            >
+                                                <option value="open">Open</option>
+                                                <option value="assigned">Accept</option>
+                                                <option value="in-progress" hidden>In-Progress</option>
+                                                <option value="resolved" hidden>Resolved</option>
+                                                <option hidden value="re-opened" >Re-Opened</option>
+                                                <option hidden value="closed">Closed</option>
+                                            </Form.Select>
+                                        </div>
+                                    </td>
+                                    <td onClick={() => HandleView(ticket)} style={{ color: '#003006ff', fontWeight: 500 }}>View</td>
                                 </tr>
                             ))
                         )}
@@ -376,7 +468,7 @@ export default function Openticket() {
                             <Card.Body>
                                 <div style={{ fontWeight: 600, fontSize: '16px', marginBottom: 4 }}>#{ticket.ticket_id}</div>
                                 <div><strong>Problem/Issue:</strong> {ticket.ticket_subject}</div>
-                                <div><strong>Type:</strong> {ticket.ticket_type}</div>
+                                {/* <div><strong>Type:</strong> {ticket.ticket_type}</div> */}
                                 <div><strong>Status:</strong> {renderStatusBadge(ticket.ticket_status)}</div>
                                 <div><strong>Urgency:</strong> {renderUrgencyBadge(ticket.ticket_urgencyLevel)}</div>
                                 <div style={{ marginBottom: 4 }}><strong>Description:</strong> {ticket.Description}</div>
@@ -407,6 +499,58 @@ export default function Openticket() {
                         <Pagination.Next onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} />
                         <Pagination.Last onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages} />
                     </Pagination>
+                </div>
+            )}
+
+            {/* Chnge status Modal */}
+            <Modal
+                show={showModal}
+                onHide={() => setShowModal(false)}
+                size="lg" // smaller than xl
+                centered
+            >
+                <Modal.Header closeButton>
+                    <Modal.Title>{modalTitle}</Modal.Title>
+                </Modal.Header>
+
+                <Modal.Body
+                    style={{
+                        maxHeight: "50vh", // responsive height limit
+                        overflowY: "auto", // scroll if content is long
+                        padding: "20px",
+                        whiteSpace: 'pre-line',
+                    }}
+                >
+                    {modalContent}
+                </Modal.Body>
+
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShowModal(false)}>
+                        Close
+                    </Button>
+                    <Button variant='primary' onClick={handleUpdate}>
+                        Save
+                    </Button>
+                </Modal.Footer>
+            </Modal>
+
+            {/* Loading Component */}
+            {loading && (
+                <div
+                    style={{
+                        position: "fixed",
+                        top: 0,
+                        left: 0,
+                        width: "100vw",
+                        height: "100vh",
+                        backgroundColor: "rgba(0,0,0,0.5)", // black transparent bg
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        zIndex: 9999,
+                    }}
+                >
+                    <Spinner animation="border" variant="light" />
                 </div>
             )}
         </Container>

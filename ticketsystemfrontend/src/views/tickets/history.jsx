@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Card, Container, Form, Col, Row, Alert } from "react-bootstrap";
+import { Card, Container, Form, Col, Row, Alert, Pagination } from "react-bootstrap";
 import axios from 'axios';
 import config from 'config';
 import { useNavigate } from 'react-router-dom';
@@ -20,8 +20,8 @@ export default function History() {
     const [currentPage, setCurrentPage] = useState(1);
     const ticketsPerPage = 10;
 
-
     const navigate = useNavigate();
+
     //Current user Data
     useEffect(() => {
         const empInfo = JSON.parse(localStorage.getItem("user"));
@@ -29,6 +29,7 @@ export default function History() {
 
     }, []);
 
+    // get all history tickets
     useEffect(() => {
         if (!userData || !userData.user_name) return;
 
@@ -93,8 +94,7 @@ export default function History() {
         fetchData();
     }, [userData]);
 
-
-
+    //Filtered tickets
     const filteredTickets = toFilter.filter((ticket) => {
 
         const ticketDate = new Date(ticket.created_at || ticket.date_created || ticket.date);
@@ -119,6 +119,7 @@ export default function History() {
         return matchesSearch && matchesStatus && matchesDate;
     });
 
+    //filter ascending to desending
     const sortedTickets = [...filteredTickets].sort((a, b) => {
         const dateA = new Date(a.created_at || a.date_created || a.date); // adjust based on your DB column
         const dateB = new Date(b.created_at || b.date_created || b.date);
@@ -131,6 +132,7 @@ export default function History() {
     const currentTickets = sortedTickets.slice(indexOfFirstTicket, indexOfLastTicket);
     const totalPages = Math.ceil(sortedTickets.length / ticketsPerPage)
 
+    //Status design
     const renderStatusBadge = (status) => {
         const baseStyle = {
             display: 'inline-block',
@@ -155,8 +157,8 @@ export default function History() {
                 style = { ...baseStyle, backgroundColor: '#033f00ff', color: '#ffffffff' }; label = 'In Progress'; break;
             case 'assigned':
                 style = { ...baseStyle, backgroundColor: '#ffcb5aff', color: '#404040ff' }; label = 'Assigned'; break;
-            case 'escalate':
-                style = { ...baseStyle, backgroundColor: '#ff7d7dff', color: '#404040ff' }; label = 'Escalated'; break;
+            // case 'escalate':
+            //     style = { ...baseStyle, backgroundColor: '#ff7d7dff', color: '#404040ff' }; label = 'Escalated'; break;
             case 'resolved':
                 style = { ...baseStyle, backgroundColor: '#91c6ffff', color: '#404040ff' }; label = 'Resolved'; break;
             case 're-opened':
@@ -170,6 +172,7 @@ export default function History() {
         return <span style={style}>{label}</span>;
     };
 
+    //Urgency Design
     const renderUrgencyBadge = (urgency) => {
         const baseStyle = {
             display: 'inline-block',
@@ -203,6 +206,7 @@ export default function History() {
         return <span style={style}>{label}</span>;
     };
 
+    //Navigate to review ticket
     const HandleView = (ticket) => {
         const params = new URLSearchParams({ id: ticket.ticket_id });
         const user = JSON.parse(localStorage.getItem('user'));
@@ -215,7 +219,6 @@ export default function History() {
     };
 
     return (
-
         <Container
             style={{
                 padding: '20px',
@@ -336,19 +339,18 @@ export default function History() {
                 </div>
             </div>
 
-
-
             {/* Desktop Table */}
             <div className="d-none d-md-block">
                 <table className="table mb-0 table-hover align-middle">
                     <thead style={{ fontSize: '14px', textTransform: 'uppercase', color: '#555', background: '#f8f9fa' }}>
                         <tr>
-                            <th>Ticket #</th>
+                            <th>Ticket ID</th>
+                            <th>Created At</th>
                             <th>Problem/Issue</th>
-                            <th>Type</th>
-                            <th>Status</th>
-                            <th>Urgency</th>
+                            <th>Assigned to</th>
+                            <th>Collaborators</th>
                             <th>Description</th>
+                            <th>Status</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -368,13 +370,14 @@ export default function History() {
                                     className="table-row-hover"
                                 >
                                     <td>{ticket.ticket_id}</td>
+                                    <td>{new Date(ticket.created_at).toLocaleString()}</td>
                                     <td>{ticket.ticket_subject}</td>
-                                    <td>{ticket.ticket_type}</td>
-                                    <td>{renderStatusBadge(ticket.ticket_status)}</td>
-                                    <td>{renderUrgencyBadge(ticket.ticket_urgencyLevel)}</td>
+                                    <td>{ticket.assigned_to || '-'}</td>
+                                    <td>{ticket.assigned_collaborators || '-'}</td>
                                     <td style={{ maxWidth: 200, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                         {ticket.Description}
                                     </td>
+                                    <td>{renderStatusBadge(ticket.ticket_status)}</td>
                                     <td style={{ color: '#003006ff', fontWeight: 500 }}>View</td>
                                 </tr>
                             ))
@@ -403,7 +406,7 @@ export default function History() {
                             <Card.Body>
                                 <div style={{ fontWeight: 600, fontSize: '16px', marginBottom: 4 }}>#{ticket.ticket_id}</div>
                                 <div><strong>Problem/Issue:</strong> {ticket.ticket_subject}</div>
-                                <div><strong>Type:</strong> {ticket.ticket_type}</div>
+                                {/* <div><strong>Type:</strong> {ticket.ticket_type}</div> */}
                                 <div><strong>Status:</strong> {renderStatusBadge(ticket.ticket_status)}</div>
                                 <div><strong>Urgency:</strong> {renderUrgencyBadge(ticket.ticket_urgencyLevel)}</div>
                                 <div style={{ marginBottom: 4 }}><strong>Description:</strong> {ticket.Description}</div>

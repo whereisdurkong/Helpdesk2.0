@@ -25,9 +25,13 @@ export default function AddComputer() {
     const [processor, setProcessor] = useState('');
     const [memory, setMemory] = useState('');
     const [storage, setStorage] = useState('');
+    const [gpu, setGPU] = useState('');
     const [monitorBrandModel, setMonitorBrandModel] = useState('');
     const [monitorSerial, setMonitorSerial] = useState('');
     const [pms_date, setPMSDate] = useState('');
+    const [date_purchased, setDatePurchased] = useState('');
+    const [windows_license, setWindowsLicense] = useState('');
+    const [microsoft_license, setMicrosoftLicense] = useState('');
     const [description, setDescription] = useState('');
 
 
@@ -42,6 +46,7 @@ export default function AddComputer() {
     const monitorBMRef = useRef();
     const monitorSerialRef = useRef();
     const pmsdateRef = useRef();
+    const datePurchasedRef = useRef();
     const descriptionRef = useRef();
 
 
@@ -50,21 +55,23 @@ export default function AddComputer() {
     const desc = 'Issue: \nWhen did it start: \nHave you tried any troubleshooting steps: \nAdditional notes: ';
     const tag = 'LMD.PC'
 
+    //All Deparments
     const departmentOptions = {
         lmd: ['ACC', 'ASY', 'CLB', 'DEV', 'ENGR', 'ESD', 'EXP', 'GEO', 'GMS', 'HRD', 'IAD', 'IMD', 'IOSD', 'LPS', 'LSD', 'MED', 'MEG', 'MEGG', 'MES', 'MET', 'MGS', 'MIL', 'MIS', 'MME', 'MMS', 'MMT', 'MOG-PRO & DEV', 'MROR', 'MV', 'MWS', 'ORM', 'PCES', 'PED', 'PRO', 'SDD', 'SLC', 'SMED', 'SMED-ENERGY', 'SMED-TRANSPORTATION', 'TSF 5A', 'TSG'],
         corp: ['AVI', 'BLCN', 'CFA', 'CHA', 'CLS', 'CMC', 'CPD', 'ISD', 'TRE']
     };
 
-    useEffect(() => {
-        if (loading) {
-            const timer = setTimeout(() => {
-                setLoading(false);
-            }, 2000);
-            return () => clearTimeout(timer)
-        }
-    }, [loading])
+    //Loading timeout 2s
+    // useEffect(() => {
+    //     if (loading) {
+    //         const timer = setTimeout(() => {
+    //             setLoading(false);
+    //         }, 2000);
+    //         return () => clearTimeout(timer)
+    //     }
+    // }, [loading])
 
-
+    //Alert Component timeout 2s
     useEffect(() => {
         if (error || success) {
             const timer = setTimeout(() => {
@@ -75,7 +82,7 @@ export default function AddComputer() {
         }
     }, [error, success]);
 
-    //HD full name
+    //setting HD full name
     useEffect(() => {
         const empInfo = JSON.parse(localStorage.getItem('user'));
         const Fullname = empInfo.user_name;
@@ -91,31 +98,34 @@ export default function AddComputer() {
 
     }, []);
 
-    //Fetch All users
+    //Fetch All users for the option on assigned_to
     useEffect(() => {
         const fetch = async () => {
-            const res = await axios.get(`${config.baseApi}/authentication/get-all-users`);
-            const data = res.data || [];
+            try {
+                const res = await axios.get(`${config.baseApi}/authentication/get-all-users`);
+                const data = res.data || [];
 
-            const allUser = data.filter(s => s.emp_tier === 'user')
-            setAllUser(allUser)
+                const allUser = data.filter(s => s.emp_tier === 'user')
+                setAllUser(allUser)
 
-            const allUsernames = allUser.map(u => {
-                const fname = u.emp_FirstName;
-                const lname = u.emp_LastName;
-                const first = fname.charAt(0).toUpperCase() + fname.slice(1).toLowerCase();
-                const last = lname.charAt(0).toUpperCase() + lname.slice(1).toLowerCase();
-                return first + ' ' + last
-            });
-            setUserOptions(allUsernames)
+                const allUsernames = allUser.map(u => {
+                    const fname = u.emp_FirstName;
+                    const lname = u.emp_LastName;
+                    const first = fname.charAt(0).toUpperCase() + fname.slice(1).toLowerCase();
+                    const last = lname.charAt(0).toUpperCase() + lname.slice(1).toLowerCase();
+                    return first + ' ' + last
+                });
+                setUserOptions(allUsernames)
+            } catch (err) {
+                console.log(err);
+                setError('Error: please try again later.')
+            }
+
         }
         fetch();
     }, [])
 
-
-
-
-
+    //Save new desktop/computer
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
@@ -124,54 +134,48 @@ export default function AddComputer() {
 
         const empInfo = JSON.parse(localStorage.getItem('user'));
 
-        if (!tag_id && !password && !ip_address && !processor && !memory && !storage && !monitorBrandModel && !monitorSerial) {
+        //empty field validation
+        if (!tag_id && !password && !ip_address && !processor && !memory && !storage && !monitorBrandModel && !monitorSerial && !date_purchased) {
             setLoading(false)
             setError('All Fields are required! please try again! ')
             return
         }
-
         if (!tag_id) {
             setLoading(false);
             tagidRef.current.focus();
             setError('Tag ID is required');
             return;
         }
-
         if (tag_id === tag) {
             setLoading(false);
             tagidRef.current.focus();
             setError('Tag ID is required');
             return;
         }
-
         if (!password) {
             setLoading(false);
             passwordRef.current.focus();
             setError('Password is required');
             return;
         }
-
         if (!ip_address) {
             setLoading(false);
             ipaddressRef.current.focus();
             setError('IP Address is required');
             return;
         }
-
         if (!processor.trim()) {
             setLoading(false);
             processorRef.current.focus();
             setError('Processor is required');
             return;
         }
-
         if (!memory) {
             setLoading(false);
             memoryRef.current.focus();
             setError('Memory is required');
             return;
         }
-
         if (!storage) {
             setLoading(false);
             storageRef.current.focus();
@@ -187,7 +191,13 @@ export default function AddComputer() {
         if (!monitorSerial) {
             setLoading(false);
             monitorSerialRef.current.focus();
-            setError('Monitor Brand Model is required');
+            setError('Monitor Serial Number is required');
+            return;
+        }
+        if (!date_purchased) {
+            setLoading(false);
+            datePurchasedRef.current.focus();
+            setError('Date Purchased is required');
             return;
         }
 
@@ -201,9 +211,13 @@ export default function AddComputer() {
                 processor: processor,
                 memory: memory,
                 storage: storage,
+                gpu: gpu,
                 monitor_model: monitorBrandModel,
                 monitor_serial: monitorSerial,
+                date_purchased: date_purchased,
                 pms_date: pms_date || '',
+                wl: windows_license || '',
+                msl: microsoft_license || '',
                 description: description || '',
                 created_by: currentUser,
                 assigned_location: empInfo.emp_location
@@ -218,11 +232,14 @@ export default function AddComputer() {
             setProcessor('');
             setMemory('');
             setStorage('');
+            setGPU('');
             setMonitorBrandModel('');
             setMonitorSerial('')
+            setDatePurchased('');
+            setWindowsLicense('');
+            setMicrosoftLicense('');
             setPMSDate('');
             setDescription('');
-            setLoading(false)
 
             window.location.replace('/ticketsystem/assets')
         } catch (err) {
@@ -231,15 +248,11 @@ export default function AddComputer() {
             setLoading(false);
             return;
         }
-
-
-
-
-
     };
 
     return (
         <Container fluid className="pt-100" style={{ background: 'linear-gradient(to bottom, #ffe798ff, #b8860b)', minHeight: '100vh', paddingTop: '100px' }}>
+            {/* Alert Components */}
             {error && (
                 <div className="position-fixed start-50 translate-middle-x" style={{ top: '100px', zIndex: 9999, minWidth: '300px' }}>
                     <Alert variant="danger" onClose={() => setError('')} dismissible>{error}</Alert>
@@ -270,7 +283,9 @@ export default function AddComputer() {
                             <h4 className="mb-3">Add Computer</h4>
                             <Form onSubmit={handleSubmit}>
                                 <Row className="mb-3">
+                                    <h6 className="text-muted fw-semibold mt-4 mb-2">Basic Asset Information</h6>
                                     <Col xs={12} md={6}>
+
                                         {/* Tag ID */}
                                         <Form.Group>
                                             <Form.Label>Tag ID</Form.Label>
@@ -330,7 +345,7 @@ export default function AddComputer() {
                                         </Form.Group>
                                     </Col>
                                 </Row>
-
+                                <h6 className="text-muted fw-semibold mt-4 mb-2">Hardware Specifications</h6>
                                 <Row className="mb-3" >
                                     <Col xs={12} md={6}>
                                         <Form.Group>
@@ -356,9 +371,7 @@ export default function AddComputer() {
                                             />
                                         </Form.Group>
                                     </Col>
-                                </Row>
 
-                                <Row className="mb-3" >
                                     <Col xs={12} md={6}>
                                         <Form.Group>
                                             <Form.Label>Memory</Form.Label>
@@ -383,8 +396,21 @@ export default function AddComputer() {
                                             />
                                         </Form.Group>
                                     </Col>
+
+                                    <Col xs={12} md={6}>
+                                        <Form.Group>
+                                            <Form.Label>Graphics Card</Form.Label>
+                                            <Form.Control
+                                                type="text"
+                                                name="gpu"
+                                                value={gpu}
+                                                onChange={(e) => setGPU(e.target.value)}
+                                            />
+                                        </Form.Group>
+                                    </Col>
                                 </Row>
 
+                                <h6 className="text-muted fw-semibold mt-4 mb-2">Monitor Information</h6>
                                 <Row className="mb-3" >
                                     <Col xs={12} md={6}>
                                         <Form.Group>
@@ -411,10 +437,11 @@ export default function AddComputer() {
                                         </Form.Group>
                                     </Col>
                                 </Row>
+                                <h6 className="text-muted fw-semibold mt-4 mb-2">Purchase & Maintenance Details</h6>
 
                                 <Row className="mb-3" >
                                     <Col xs={12} md={6}>
-                                        <Form.Group className="mb-3" style={{ display: 'flex', flexDirection: 'column' }}>
+                                        <Form.Group style={{ display: 'flex', flexDirection: 'column' }}>
                                             <Form.Label
                                                 style={{
 
@@ -422,6 +449,20 @@ export default function AddComputer() {
                                                     marginBottom: '6px'
                                                 }}
                                             >
+                                                Purchased Dates
+                                            </Form.Label>
+                                            <DatePicker
+                                                selected={date_purchased}
+                                                onChange={(date) => setDatePurchased(date)}
+                                                dateFormat="yyyy-MM-dd"
+                                                className="form-control"
+                                                placeholderText="Select purchased date"
+                                            />
+                                        </Form.Group>
+                                    </Col>
+                                    <Col xs={12} md={6}>
+                                        <Form.Group style={{ display: 'flex', flexDirection: 'column' }}>
+                                            <Form.Label style={{ fontSize: '14px', marginBottom: '6px' }}>
                                                 PMS Date
                                             </Form.Label>
                                             <DatePicker
@@ -429,11 +470,32 @@ export default function AddComputer() {
                                                 onChange={(date) => setPMSDate(date)}
                                                 dateFormat="yyyy-MM-dd"
                                                 className="form-control"
-                                                placeholderText="Select date"
+                                                placeholderText="Select pms date"
                                             />
                                         </Form.Group>
                                     </Col>
-
+                                    <Col xs={12} md={6}>
+                                        <Form.Group>
+                                            <Form.Label>Microsoft License</Form.Label>
+                                            <Form.Control
+                                                type="text"
+                                                name="ms-license"
+                                                value={microsoft_license}
+                                                onChange={(e) => setMicrosoftLicense(e.target.value)}
+                                            />
+                                        </Form.Group>
+                                    </Col>
+                                    <Col xs={12} md={6}>
+                                        <Form.Group>
+                                            <Form.Label>Windows License</Form.Label>
+                                            <Form.Control
+                                                type="text"
+                                                name="windows-license"
+                                                value={windows_license}
+                                                onChange={(e) => setWindowsLicense(e.target.value)}
+                                            />
+                                        </Form.Group>
+                                    </Col>
                                 </Row>
 
 
@@ -469,6 +531,7 @@ export default function AddComputer() {
                     </Col>
                 </Row>
             </AnimatedContent>
+            {/* Loading Component */}
             {loading && (
                 <div
                     style={{

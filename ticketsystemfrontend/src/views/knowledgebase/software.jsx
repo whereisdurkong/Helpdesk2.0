@@ -24,14 +24,15 @@ export default function Software() {
     const [access, setAccess] = useState(false)
     const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        if (loading) {
-            const timer = setTimeout(() => {
-                setLoading(false);
-            }, 2000);
-            return () => clearTimeout(timer)
-        }
-    }, [loading])
+    // Loading Component 2s
+    // useEffect(() => {
+    //     if (loading) {
+    //         const timer = setTimeout(() => {
+    //             setLoading(false);
+    //         }, 2000);
+    //         return () => clearTimeout(timer)
+    //     }
+    // }, [loading])
 
     // Check user access
     useEffect(() => {
@@ -64,7 +65,7 @@ export default function Software() {
                 if (all.data && Array.isArray(all.data)) {
                     setFaqData(
                         all.data
-                            .filter(item => item.is_active === true && item.kb_category === "software")
+                            .filter(item => item.is_active === true && item.kb_category === "application")
                             .map(item => ({
                                 id: item.kb_id,
                                 question: item.kb_title,
@@ -87,14 +88,14 @@ export default function Software() {
         }
     }, [showModal]);
 
+    //Arhcive function
     const handleArchive = async (id) => {
-
         try {
             setLoading(true)
             const empInfo = JSON.parse(localStorage.getItem("user"));
             await axios.post(`${config.baseApi}/knowledgebase/archive-knowledgebase`, { kb_id: id, updated_by: empInfo.user_name })
 
-            setSuccess("Software troubleshooting step archived successfully");
+            setSuccess("Application troubleshooting step archived successfully");
             window.location.reload();
 
         } catch (err) {
@@ -105,6 +106,7 @@ export default function Software() {
 
     }
 
+    //Update Function
     const handleUpdate = async () => {
 
         if (newTitle === '') {
@@ -125,7 +127,7 @@ export default function Software() {
                 })
 
                 setEditMode(false);
-                setSuccess("Software updated successfully");
+                setSuccess("Application updated successfully");
                 setNewTitle("");
                 setNewContent("");
                 setShowModal(false);
@@ -136,8 +138,9 @@ export default function Software() {
         }
     }
 
+    //Add Fucntion
     const handleSave = async () => {
-        console.log("Saving Software:", newTitle, newContent);
+        console.log("Saving Application:", newTitle, newContent);
 
         if (newTitle === '') {
             setLoading(false)
@@ -153,11 +156,11 @@ export default function Software() {
                     kb_title: newTitle,
                     kb_desc: newContent,
                     created_by: empInfo.user_name,
-                    kb_category: "software"
+                    kb_category: "application"
                 });
-                setSuccess("Software saved successfully");
+                setSuccess("Application saved successfully");
             } catch (err) {
-                console.error("Error saving Software:", err);
+                console.error("Error saving Application:", err);
             }
 
             setFaqData([...faqData, { question: newTitle, answer: newContent }]);
@@ -170,6 +173,7 @@ export default function Software() {
         }
     };
 
+    //Format and styles function
     const handleContentChange = () => {
         setNewContent(contentRef.current.innerHTML);
     };
@@ -198,6 +202,7 @@ export default function Software() {
                 paddingBottom: '20px',
             }}
         >
+            {/* Alert Components */}
             {error && (
                 <div className="position-fixed start-50 translate-middle-x" style={{ top: '100px', zIndex: 9999, minWidth: '300px' }}>
                     <Alert variant="danger" onClose={() => setError('')} dismissible>{error}</Alert>
@@ -211,10 +216,11 @@ export default function Software() {
             <Container>
                 <Card className="p-4 shadow-lg" style={{ borderRadius: "20px", backgroundColor: "#fff" }}>
                     <div className="d-flex justify-content-between align-items-center mb-3">
-                        <h2 className="fw-bold text-dark mb-0">Software Frequently Asked Questions</h2>
+                        <h2 className="fw-bold text-dark mb-0">Application Frequently Asked Questions</h2>
+                        {/* Buttons */}
                         {access && (
                             <div className="d-flex gap-2">
-                                <Button variant="primary" onClick={() => navigate('/softwarearchive')}>Archive</Button>
+                                <Button variant="primary" onClick={() => navigate('/applicationarchive')}>Archive</Button>
                                 <Button variant="primary" onClick={() => { setShowModal(true); setAddMode(true); }}>Add</Button>
                             </div>
                         )}
@@ -225,7 +231,7 @@ export default function Software() {
                     <Accordion defaultActiveKey={0} flush>
                         {faqData.length === 0 ? (
                             <div className="text-center text-muted py-3">
-                                No software articles found
+                                No application articles found
                             </div>
                         ) : (
                             faqData.map((faq, index) => (
@@ -292,10 +298,10 @@ export default function Software() {
                 </Card>
             </Container>
 
-            {/* Modal */}
+            {/* Modal for Edit || Add*/}
             <Modal show={showModal} onHide={() => setShowModal(false)} size="lg" centered>
                 <Modal.Header >
-                    <Modal.Title>{editMode ? 'Edit Software Troubleshooting Step' : 'Add Software Troubleshooting Step'}</Modal.Title>
+                    <Modal.Title>{editMode ? 'Edit Application Troubleshooting Step' : 'Add Application Troubleshooting Step'}</Modal.Title>
 
                 </Modal.Header>
                 <Modal.Body>
@@ -358,6 +364,7 @@ export default function Software() {
                 </Modal.Footer>
             </Modal>
 
+            {/* Loading Component */}
             {loading && (
                 <div
                     style={{

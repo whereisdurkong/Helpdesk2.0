@@ -22,7 +22,7 @@ export default function AddPrinter() {
     const [ip_address, setIpAddress] = useState('');
     const [model, setModel] = useState('');
     const [serial, setSerial] = useState('');
-
+    const [date_purchased, setDatePurchased] = useState('');
     const [pms_date, setPMSDate] = useState('');
     const [description, setDescription] = useState('');
 
@@ -34,6 +34,7 @@ export default function AddPrinter() {
     const modelRef = useRef();
     const serialRef = useRef();
     const descriptionRef = useRef();
+    const datepurchasedRef = useRef();
 
 
     const [currentUser, setCurrentUser] = useState('');
@@ -46,16 +47,17 @@ export default function AddPrinter() {
         corp: ['AVI', 'BLCN', 'CFA', 'CHA', 'CLS', 'CMC', 'CPD', 'ISD', 'TRE']
     };
 
-    useEffect(() => {
-        if (loading) {
-            const timer = setTimeout(() => {
-                setLoading(false);
-            }, 2000);
-            return () => clearTimeout(timer)
-        }
-    }, [loading])
+    //loading state 3s
+    // useEffect(() => {
+    //     if (loading) {
+    //         const timer = setTimeout(() => {
+    //             setLoading(false);
+    //         }, 2000);
+    //         return () => clearTimeout(timer)
+    //     }
+    // }, [loading])
 
-
+    // Alert state 3s
     useEffect(() => {
         if (error || success) {
             const timer = setTimeout(() => {
@@ -85,27 +87,30 @@ export default function AddPrinter() {
     //Fetch All users
     useEffect(() => {
         const fetch = async () => {
-            const res = await axios.get(`${config.baseApi}/authentication/get-all-users`);
-            const data = res.data || [];
+            try {
+                const res = await axios.get(`${config.baseApi}/authentication/get-all-users`);
+                const data = res.data || [];
 
-            const allUser = data.filter(s => s.emp_tier === 'user')
+                const allUser = data.filter(s => s.emp_tier === 'user')
 
-            const allUsernames = allUser.map(u => {
-                const fname = u.emp_FirstName;
-                const lname = u.emp_LastName;
-                const first = fname.charAt(0).toUpperCase() + fname.slice(1).toLowerCase();
-                const last = lname.charAt(0).toUpperCase() + lname.slice(1).toLowerCase();
-                return first + ' ' + last
-            });
-            setUserOptions(allUsernames)
+                const allUsernames = allUser.map(u => {
+                    const fname = u.emp_FirstName;
+                    const lname = u.emp_LastName;
+                    const first = fname.charAt(0).toUpperCase() + fname.slice(1).toLowerCase();
+                    const last = lname.charAt(0).toUpperCase() + lname.slice(1).toLowerCase();
+                    return first + ' ' + last
+                });
+                setUserOptions(allUsernames)
+            } catch (err) {
+                console.log('Unable to get all users: ', err);
+                return;
+            }
+
         }
         fetch();
     }, [])
 
-
-
-
-
+    //Save Function
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
@@ -113,28 +118,24 @@ export default function AddPrinter() {
         setLoading(true)
 
         const empInfo = JSON.parse(localStorage.getItem('user'));
-
+        // Empty fields validation
         if (!tag_id && !model && !serial && !ip_address) {
             setLoading(false)
             setError('All Fields are required! please try again! ')
             return
         }
-
         if (!tag_id) {
             setLoading(false);
             tagidRef.current.focus();
             setError('Tag ID is required');
             return;
         }
-
         if (tag_id === tag) {
             setLoading(false);
             tagidRef.current.focus();
             setError('Tag ID is required');
             return;
         }
-
-
         if (!ip_address) {
             setLoading(false);
             ipaddressRef.current.focus();
@@ -153,6 +154,12 @@ export default function AddPrinter() {
             setError('Serial is required');
             return;
         }
+        if (!date_purchased) {
+            setLoading(false);
+            datepurchasedRef.current.focus();
+            setError('Date Purchased is required');
+            return;
+        }
 
         console.log(tag_id, department, assign_to, ip_address, model, serial, pms_date, description);
 
@@ -164,6 +171,7 @@ export default function AddPrinter() {
                 ip_address: ip_address,
                 model: model,
                 serial: serial,
+                date_purchased: date_purchased || '',
                 pms_date: pms_date || '',
                 description: description || '',
                 created_by: currentUser,
@@ -178,6 +186,7 @@ export default function AddPrinter() {
             setIpAddress('');
             setModel('');
             setSerial('');
+            setDatePurchased('');
             setPMSDate('');
             setDescription('');
             setLoading(false)
@@ -189,15 +198,11 @@ export default function AddPrinter() {
             setLoading(false);
             return;
         }
-
-
-
-
-
     };
 
     return (
         <Container fluid className="pt-100" style={{ background: 'linear-gradient(to bottom, #ffe798ff, #b8860b)', minHeight: '100vh', paddingTop: '100px' }}>
+            {/* Alert Component */}
             {error && (
                 <div className="position-fixed start-50 translate-middle-x" style={{ top: '100px', zIndex: 9999, minWidth: '300px' }}>
                     <Alert variant="danger" onClose={() => setError('')} dismissible>{error}</Alert>
@@ -227,6 +232,8 @@ export default function AddPrinter() {
                         <Card className="p-4 shadow-sm">
                             <h4 className="mb-3">Add Printer</h4>
                             <Form onSubmit={handleSubmit}>
+                                <h6 className="text-muted fw-semibold mt-4 mb-2">Basic Asset Information</h6>
+
                                 <Row className="mb-3">
                                     <Col xs={12} md={6}>
                                         {/* Tag ID */}
@@ -256,8 +263,7 @@ export default function AddPrinter() {
                                             </Form.Select>
                                         </Form.Group>
                                     </Col>
-                                </Row>
-                                <Row className="mb-3" >
+
                                     <Col xs={12} md={6}>
                                         <Form.Group>
                                             <Form.Label>Assign to</Form.Label>
@@ -277,6 +283,7 @@ export default function AddPrinter() {
                                     </Col>
 
                                 </Row>
+                                <h6 className="text-muted fw-semibold mt-4 mb-2">Hardware Specifications</h6>
 
                                 <Row className="mb-3" >
                                     <Col xs={12} md={6}>
@@ -303,9 +310,6 @@ export default function AddPrinter() {
                                             />
                                         </Form.Group>
                                     </Col>
-                                </Row>
-
-                                <Row className="mb-3" >
                                     <Col xs={12} md={6}>
                                         <Form.Group>
                                             <Form.Label>Serial</Form.Label>
@@ -318,6 +322,10 @@ export default function AddPrinter() {
                                             />
                                         </Form.Group>
                                     </Col>
+
+                                </Row>
+                                <h6 className="text-muted fw-semibold mt-4 mb-2">Purchase & Maintenance Details</h6>
+                                <Row className="mb-3" >
                                     <Col xs={12} md={6}>
                                         <Form.Group className="mb-3" style={{ display: 'flex', flexDirection: 'column' }}>
                                             <Form.Label
@@ -338,9 +346,22 @@ export default function AddPrinter() {
                                             />
                                         </Form.Group>
                                     </Col>
+                                    <Col xs={12} md={6}>
+                                        <Form.Group style={{ display: 'flex', flexDirection: 'column' }}>
+                                            <Form.Label style={{ fontSize: '14px', marginBottom: '6px' }}>
+                                                Date Purchased
+                                            </Form.Label>
+                                            <DatePicker
+                                                placeholderText='Pick date'
+                                                selected={date_purchased ? new Date(date_purchased) : null}
+                                                onChange={(date) => setDatePurchased(date?.toLocaleString())}
+                                                dateFormat="yyyy-MM-dd"
+                                                className="form-control"
+                                                disabled={!close}
+                                            />
+                                        </Form.Group>
+                                    </Col>
                                 </Row>
-
-
                                 <Form.Group className="mb-3">
                                     <Form.Label>Description</Form.Label>
                                     <Form.Control
@@ -373,6 +394,7 @@ export default function AddPrinter() {
                     </Col>
                 </Row>
             </AnimatedContent>
+            {/* Loading Component */}
             {loading && (
                 <div
                     style={{

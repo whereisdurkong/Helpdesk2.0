@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { Card, Container, Row, Col, Form, Button, Alert, Spinner, InputGroup } from "react-bootstrap";
 
 import FeatherIcon from 'feather-icons-react';
+import BTN from "layouts/ReactBits/BTN";
 
 export default function EditPassword() {
     const [newPassword, setNewPassword] = useState("");
@@ -13,7 +14,6 @@ export default function EditPassword() {
     const [showNew, setShowNew] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
 
-
     const [loading, setLoading] = useState(false);
     const [successful, setSuccessful] = useState('');
     const [error, setError] = useState('');
@@ -21,17 +21,17 @@ export default function EditPassword() {
     const newPasswordRef = useRef();
     const confirmPasswordRef = useRef();
 
-    useEffect(() => {
-        if (loading) {
-            const timer = setTimeout(() => {
-                setLoading(false);
-            }, 2000);
-            return () => clearTimeout(timer)
-        }
-    }, [loading])
+    //Loading state 2s
+    // useEffect(() => {
+    //     if (loading) {
+    //         const timer = setTimeout(() => {
+    //             setLoading(false);
+    //         }, 2000);
+    //         return () => clearTimeout(timer)
+    //     }
+    // }, [loading])
 
-
-
+    //Alert state 6s
     useEffect(() => {
         if (error || successful) {
             const timer = setTimeout(() => {
@@ -42,9 +42,11 @@ export default function EditPassword() {
         }
     }, [error, successful]);
 
+    //Save function
     const handleSubmit = async (e) => {
         e.preventDefault();
         const empInfo = JSON.parse(localStorage.getItem("user"));
+        //Validations
         if (!newPassword) {
             setError("Password is empty!");
             newPasswordRef.current.focus()
@@ -101,7 +103,7 @@ export default function EditPassword() {
                     >
                         <Card.Body className="position-relative">
 
-                            {/* Centered alerts inside the card */}
+                            {/*Alert Components*/}
                             {(error || successful) && (
                                 <div
                                     className="position-absolute start-50 translate-middle"
@@ -185,27 +187,17 @@ export default function EditPassword() {
                                     </InputGroup>
                                 </Form.Group>
 
-                                <Button
-                                    variant="warning"
-                                    type="submit"
-                                    className="w-100"
-                                    style={{
-                                        backgroundColor: "#b8860b",
-                                        border: "none",
-                                        fontWeight: "bold",
-                                    }}
-                                >
-                                    Update Password
-                                </Button>
+                                <div style={{ width: '100%', textAlign: 'end', paddingTop: '20px' }}>
+                                    <BTN type="submit" label={'Update Password'} />
+                                </div>
                             </Form>
-
                         </Card.Body>
                     </Card>
 
                 </Col>
             </Row>
 
-
+            {/* Loading Component */}
             {loading && (
                 <div
                     style={{

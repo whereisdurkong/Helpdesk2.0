@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Table, Container } from 'react-bootstrap';
+import { useEffect, useState, useRef } from 'react';
+import { Table, Container, Button } from 'react-bootstrap';
 import axios from 'axios';
 import config from 'config';
 
@@ -11,12 +11,19 @@ import Alltickets from './alltickets';
 import Myticket from './myticket';
 import History from './history';
 import ArchivedTickets from './archivedtickets';
+import { useNavigate } from 'react-router';
+
+import VariableProximity from 'layouts/ReactBits/VariableProximity.jsx'
+
+import AnimatedContent from 'layouts/ReactBits/AnimatedContent';
 
 export default function Tickets() {
-
+    const containerRef = useRef(null);
     const [adminaccess, setadminAccess] = useState(false);
     const [hdaccess, sethdAccess] = useState(false);
+    const navigate = useNavigate();
 
+    //Getting user role
     useEffect(() => {
         const userInfo = JSON.parse(localStorage.getItem('user'));
         if (userInfo.emp_tier === 'helpdesk') {
@@ -25,6 +32,19 @@ export default function Tickets() {
             setadminAccess(true)
         }
     }, [])
+
+    // Naviagte tp create a ticket base on role
+    const HandleRegister = () => {
+        const userInfo = JSON.parse(localStorage.getItem('user'));
+
+        if (userInfo.emp_tier === 'helpdesk') {
+            navigate(`/create-ticket-hd`)
+        } else if (userInfo.emp_tier === 'user') {
+            navigate(`/create-ticket-user`)
+        }
+    }
+
+
     return (
         <Container
             fluid
@@ -33,15 +53,37 @@ export default function Tickets() {
                 background: 'linear-gradient(to bottom, #ffe798ff, #b8860b)',
                 minHeight: '100vh',
                 paddingTop: '100px',
+
             }}
         >
             {/* Outer Center Wrapper */}
-            <div
-                style={{
-                    maxWidth: "1500px", // match your table width
-                    margin: "0 auto",
-                }}
-            >
+            <div style={{ maxWidth: "1500px", margin: "0 auto", }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '10px' }} >
+                    <div>
+                        {/* <div ref={containerRef}>
+                            <VariableProximity
+                                label={'Support Tickets'}
+                                className={'variable-proximity-demo'}
+                                style={{
+                                    fontSize: '2rem', // responsive font size
+                                    color: "#5d3600ff"
+                                }}
+                                fromFontVariationSettings="'wght' 800, 'opsz' 9"
+                                toFontVariationSettings="'wght' 2000, 'opsz' 30"
+                                containerRef={containerRef}
+                                radius={50}
+                                falloff="linear"
+                            />
+                        </div> */}
+                        <h3 style={{
+                            fontSize: '2rem', // responsive font size
+                            color: "#5d3600ff"
+                        }}
+                        ><b>Support Tickets</b>
+                        </h3>
+                    </div>
+                    <Button onClick={HandleRegister}>+ Create Ticket</Button>
+                </div>
                 <Tabs
                     defaultActiveKey="my"
                     transition={false}
@@ -51,12 +93,31 @@ export default function Tickets() {
                         borderBottom: "2px solid #ddd",
                     }}
                 >
+
                     <Tab
                         eventKey="my"
                         title={
-                            <span style={{ color: "#5d3600ff", fontWeight: "bold" }}>
-                                My Tickets
-                            </span>
+                            <div ref={containerRef}>
+                                <VariableProximity
+                                    label={'My Tickets'}
+                                    className={'variable-proximity-demo'}
+                                    style={{
+                                        fontSize: '1rem', // responsive font size
+                                        color: "#5d3600ff"
+                                    }}
+                                    fromFontVariationSettings="'wght' 800, 'opsz' 9"
+                                    toFontVariationSettings="'wght' 2000, 'opsz' 30"
+                                    containerRef={containerRef}
+                                    radius={50}
+                                    falloff="linear"
+                                />
+                            </div>
+                            // <h3 style={{
+                            //     fontSize: '1rem', // responsive font size
+                            //     color: "#5d3600ff"
+                            // }}
+                            // ><b>MY TICKETS</b>
+                            // </h3>
                         }
                     >
                         <Myticket />
@@ -66,9 +127,23 @@ export default function Tickets() {
                         <Tab
                             eventKey="open"
                             title={
-                                <span style={{ color: "#5d3600ff", fontWeight: "bold" }}>
-                                    Open Tickets
-                                </span>
+                                <div
+                                    ref={containerRef}
+                                >
+                                    <VariableProximity
+                                        label={'Open Tickets'}
+                                        className={'variable-proximity-demo'}
+                                        style={{
+                                            fontSize: '1rem', // responsive font size
+                                            color: "#5d3600ff"
+                                        }}
+                                        fromFontVariationSettings="'wght' 800, 'opsz' 9"
+                                        toFontVariationSettings="'wght' 2000, 'opsz' 30"
+                                        containerRef={containerRef}
+                                        radius={50}
+                                        falloff="linear"
+                                    />
+                                </div>
                             }
                         >
                             <Openticket />
@@ -79,23 +154,75 @@ export default function Tickets() {
                         <Tab
                             eventKey="all"
                             title={
-                                <span style={{ color: "#5d3600ff", fontWeight: "bold" }}>
-                                    All Tickets
-                                </span>
+                                <div
+                                    ref={containerRef}
+                                >
+                                    <VariableProximity
+                                        label={'All Tickets'}
+                                        className={'variable-proximity-demo'}
+                                        style={{
+                                            fontSize: '1rem', // responsive font size
+                                            color: "#5d3600ff"
+                                        }}
+                                        fromFontVariationSettings="'wght' 800, 'opsz' 9"
+                                        toFontVariationSettings="'wght' 2000, 'opsz' 30"
+                                        containerRef={containerRef}
+                                        radius={50}
+                                        falloff="linear"
+                                    />
+                                </div>
                             }
                         >
                             <Alltickets />
                         </Tab>
                     )}
 
-                    {hdaccess && (<Tab eventKey="all" title={<span style={{ color: '#5d3600ff', fontWeight: 'bold' }}>All Tickets</span>} > <Alltickets /> </Tab>)}
+                    {hdaccess && (
+                        <Tab eventKey="all"
+                            title={
+                                <div
+                                    ref={containerRef}
+                                >
+                                    <VariableProximity
+                                        label={'All Tickets'}
+                                        className={'variable-proximity-demo'}
+                                        style={{
+                                            fontSize: '1rem', // responsive font size
+                                            color: "#5d3600ff"
+                                        }}
+                                        fromFontVariationSettings="'wght' 800, 'opsz' 9"
+                                        toFontVariationSettings="'wght' 2000, 'opsz' 30"
+                                        containerRef={containerRef}
+                                        radius={50}
+                                        falloff="linear"
+                                    />
+                                </div>
+                            }
+                        >
+                            <Alltickets />
+                        </Tab>
+                    )}
 
                     <Tab
                         eventKey="history"
                         title={
-                            <span style={{ color: "#5d3600ff", fontWeight: "bold" }}>
-                                History
-                            </span>
+                            <div
+                                ref={containerRef}
+                            >
+                                <VariableProximity
+                                    label={'History'}
+                                    className={'variable-proximity-demo'}
+                                    style={{
+                                        fontSize: '1rem', // responsive font size
+                                        color: "#5d3600ff"
+                                    }}
+                                    fromFontVariationSettings="'wght' 800, 'opsz' 9"
+                                    toFontVariationSettings="'wght' 2000, 'opsz' 30"
+                                    containerRef={containerRef}
+                                    radius={50}
+                                    falloff="linear"
+                                />
+                            </div>
                         }
                     >
                         <History />
@@ -105,9 +232,23 @@ export default function Tickets() {
                         <Tab
                             eventKey="archived"
                             title={
-                                <span style={{ color: "#5d3600ff", fontWeight: "bold" }}>
-                                    Archived
-                                </span>
+                                <div
+                                    ref={containerRef}
+                                >
+                                    <VariableProximity
+                                        label={'Archived'}
+                                        className={'variable-proximity-demo'}
+                                        style={{
+                                            fontSize: '1rem', // responsive font size
+                                            color: "#5d3600ff"
+                                        }}
+                                        fromFontVariationSettings="'wght' 800, 'opsz' 9"
+                                        toFontVariationSettings="'wght' 2000, 'opsz' 30"
+                                        containerRef={containerRef}
+                                        radius={50}
+                                        falloff="linear"
+                                    />
+                                </div>
                             }
                         >
                             <ArchivedTickets />
@@ -115,6 +256,7 @@ export default function Tickets() {
                     )}
                 </Tabs>
             </div>
+
         </Container>
     );
 }

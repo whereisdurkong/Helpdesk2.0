@@ -29,7 +29,9 @@ export default function AddLaptop() {
     const [storage, setStorage] = useState('');
     const [pms_date, setPMSDate] = useState('');
     const [description, setDescription] = useState('');
-
+    const [date_purchased, setDatePurchased] = useState('');
+    const [microsoft_license, setMicrosoftLicense] = useState('');
+    const [windows_license, setWindowsLicense] = useState('');
 
     const tagidRef = useRef();
     const deparmentRef = useRef();
@@ -42,6 +44,7 @@ export default function AddLaptop() {
     const memoryRef = useRef();
     const storageRef = useRef();
     const descriptionRef = useRef();
+    const datepurchasedRef = useRef();
 
 
     const [currentUser, setCurrentUser] = useState('');
@@ -54,16 +57,17 @@ export default function AddLaptop() {
         corp: ['AVI', 'BLCN', 'CFA', 'CHA', 'CLS', 'CMC', 'CPD', 'ISD', 'TRE']
     };
 
-    useEffect(() => {
-        if (loading) {
-            const timer = setTimeout(() => {
-                setLoading(false);
-            }, 2000);
-            return () => clearTimeout(timer)
-        }
-    }, [loading])
+    //Loading state 2s
+    // useEffect(() => {
+    //     if (loading) {
+    //         const timer = setTimeout(() => {
+    //             setLoading(false);
+    //         }, 2000);
+    //         return () => clearTimeout(timer)
+    //     }
+    // }, [loading])
 
-
+    //Alert state 3s
     useEffect(() => {
         if (error || success) {
             const timer = setTimeout(() => {
@@ -93,27 +97,30 @@ export default function AddLaptop() {
     //Fetch All users
     useEffect(() => {
         const fetch = async () => {
-            const res = await axios.get(`${config.baseApi}/authentication/get-all-users`);
-            const data = res.data || [];
+            try {
+                const res = await axios.get(`${config.baseApi}/authentication/get-all-users`);
+                const data = res.data || [];
 
-            const allUser = data.filter(s => s.emp_tier === 'user')
+                const allUser = data.filter(s => s.emp_tier === 'user')
 
-            const allUsernames = allUser.map(u => {
-                const fname = u.emp_FirstName;
-                const lname = u.emp_LastName;
-                const first = fname.charAt(0).toUpperCase() + fname.slice(1).toLowerCase();
-                const last = lname.charAt(0).toUpperCase() + lname.slice(1).toLowerCase();
-                return first + ' ' + last
-            });
-            setUserOptions(allUsernames)
+                const allUsernames = allUser.map(u => {
+                    const fname = u.emp_FirstName;
+                    const lname = u.emp_LastName;
+                    const first = fname.charAt(0).toUpperCase() + fname.slice(1).toLowerCase();
+                    const last = lname.charAt(0).toUpperCase() + lname.slice(1).toLowerCase();
+                    return first + ' ' + last
+                });
+                setUserOptions(allUsernames)
+            } catch (err) {
+                console.log('UNable to get all users, something went wrong');
+                return;
+            }
+
         }
         fetch();
     }, [])
 
-
-
-
-
+    //Save Function
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
@@ -122,33 +129,30 @@ export default function AddLaptop() {
 
         const empInfo = JSON.parse(localStorage.getItem('user'));
 
+        //Check empty fields
         if (!tag_id && !password && !ip_address && !processor && !memory && !storage) {
             setLoading(false)
             setError('All Fields are required! please try again! ')
             return
         }
-
         if (!tag_id) {
             setLoading(false);
             tagidRef.current.focus();
             setError('Tag ID is required');
             return;
         }
-
         if (tag_id === tag) {
             setLoading(false);
             tagidRef.current.focus();
             setError('Tag ID is required');
             return;
         }
-
         if (!password) {
             setLoading(false);
             passwordRef.current.focus();
             setError('Password is required');
             return;
         }
-
         if (!ip_address) {
             setLoading(false);
             ipaddressRef.current.focus();
@@ -167,28 +171,30 @@ export default function AddLaptop() {
             setError('Serial is required');
             return;
         }
-
         if (!processor.trim()) {
             setLoading(false);
             processorRef.current.focus();
             setError('Processor is required');
             return;
         }
-
         if (!memory) {
             setLoading(false);
             memoryRef.current.focus();
             setError('Memory is required');
             return;
         }
-
         if (!storage) {
             setLoading(false);
             storageRef.current.focus();
             setError('Storage is required');
             return;
         }
-
+        if (!date_purchased) {
+            setLoading(false);
+            datepurchasedRef.current.focus();
+            setError('Date Purchased is required');
+            return;
+        }
 
         console.log(tag_id, department, assign_to, password, ip_address, model, serial, processor, memory, storage, pms_date, description);
 
@@ -203,6 +209,9 @@ export default function AddLaptop() {
                 serial: serial,
                 processor: processor,
                 memory: memory,
+                date_purchased: date_purchased,
+                wl: windows_license,
+                msl: microsoft_license,
                 storage: storage,
                 pms_date: pms_date || '',
                 description: description || '',
@@ -218,6 +227,9 @@ export default function AddLaptop() {
             setIpAddress('');
             setModel('');
             setSerial('');
+            setDatePurchased('');
+            setWindowsLicense('');
+            setMicrosoftLicense('');
             setProcessor('');
             setMemory('');
             setStorage('');
@@ -232,15 +244,12 @@ export default function AddLaptop() {
             setLoading(false);
             return;
         }
-
-
-
-
-
     };
+
 
     return (
         <Container fluid className="pt-100" style={{ background: 'linear-gradient(to bottom, #ffe798ff, #b8860b)', minHeight: '100vh', paddingTop: '100px' }}>
+            {/* Alert Component */}
             {error && (
                 <div className="position-fixed start-50 translate-middle-x" style={{ top: '100px', zIndex: 9999, minWidth: '300px' }}>
                     <Alert variant="danger" onClose={() => setError('')} dismissible>{error}</Alert>
@@ -271,6 +280,8 @@ export default function AddLaptop() {
                             <h4 className="mb-3">Add Laptop</h4>
                             <Form onSubmit={handleSubmit}>
                                 <Row className="mb-3">
+                                    <h6 className="text-muted fw-semibold mt-4 mb-2">Basic Asset Information</h6>
+
                                     <Col xs={12} md={6}>
                                         {/* Tag ID */}
                                         <Form.Group>
@@ -329,7 +340,7 @@ export default function AddLaptop() {
                                         </Form.Group>
                                     </Col>
                                 </Row>
-
+                                <h6 className="text-muted fw-semibold mt-4 mb-2">Hardware Specifications</h6>
                                 <Row className="mb-3" >
                                     <Col xs={12} md={6}>
                                         <Form.Group>
@@ -355,9 +366,7 @@ export default function AddLaptop() {
                                             />
                                         </Form.Group>
                                     </Col>
-                                </Row>
 
-                                <Row className="mb-3" >
                                     <Col xs={12} md={6}>
                                         <Form.Group>
                                             <Form.Label>Serial</Form.Label>
@@ -382,9 +391,7 @@ export default function AddLaptop() {
                                             />
                                         </Form.Group>
                                     </Col>
-                                </Row>
 
-                                <Row className="mb-3" >
                                     <Col xs={12} md={6}>
                                         <Form.Group>
                                             <Form.Label>Memory</Form.Label>
@@ -410,6 +417,7 @@ export default function AddLaptop() {
                                         </Form.Group>
                                     </Col>
                                 </Row>
+                                <h6 className="text-muted fw-semibold mt-4 mb-2">Purchase & Maintenance Details</h6>
                                 <Row className="mb-3" >
                                     <Col xs={12} md={6}>
                                         <Form.Group className="mb-3" style={{ display: 'flex', flexDirection: 'column' }}>
@@ -431,7 +439,34 @@ export default function AddLaptop() {
                                             />
                                         </Form.Group>
                                     </Col>
+                                    <Col xs={12} md={6}>
+                                        <Form.Group style={{ display: 'flex', flexDirection: 'column' }}>
+                                            <Form.Label style={{ fontSize: '14px', marginBottom: '6px' }}>
+                                                Date Purchased
+                                            </Form.Label>
+                                            <DatePicker
+                                                placeholderText='Pick date'
+                                                selected={date_purchased ? new Date(date_purchased) : null}
+                                                onChange={(date) => setDatePurchased(date?.toLocaleString())}
+                                                dateFormat="yyyy-MM-dd"
+                                                className="form-control"
+                                                disabled={!close}
+                                            />
+                                        </Form.Group>
+                                    </Col>
 
+                                    <Col xs={12} md={6}>
+                                        <Form.Group>
+                                            <Form.Label>Microsoft License</Form.Label>
+                                            <Form.Control type="text" value={microsoft_license} onChange={(e) => setMicrosoftLicense(e.target.value)} disabled={!close} />
+                                        </Form.Group>
+                                    </Col>
+                                    <Col xs={12} md={6}>
+                                        <Form.Group>
+                                            <Form.Label>Windows License</Form.Label>
+                                            <Form.Control type="text" value={windows_license} onChange={(e) => setWindowsLicense(e.target.value)} disabled={!close} />
+                                        </Form.Group>
+                                    </Col>
                                 </Row>
 
 
@@ -467,6 +502,8 @@ export default function AddLaptop() {
                     </Col>
                 </Row>
             </AnimatedContent>
+
+            {/* Loading Component */}
             {loading && (
                 <div
                     style={{

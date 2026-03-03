@@ -1,13 +1,19 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Form, Button, Card, Row, Col, Container, Alert } from 'react-bootstrap';
 import axios from 'axios';
 import config from 'config';
 import AnimatedContent from 'layouts/ReactBits/AnimatedContent';
 
+import VariableProximity from 'layouts/ReactBits/VariableProximity.jsx'
+import CreatableSelect from 'react-select/creatable';
 export default function CreateTicketHD() {
+    const containerRef = useRef(null);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [validationErrors, setValidationErrors] = useState({});
+    const [assets, setAssets] = useState([]);
+    const [currentUser, setCurrentUser] = useState('');
+    const [fullname, setFullName] = useState('');
     const [formData, setFormData] = useState({
         ticket_subject: '',
         ticket_status: '',
@@ -20,30 +26,10 @@ export default function CreateTicketHD() {
         created_by: '',
     });
 
-    const [currentUser, setCurrentUser] = useState('');
-    const [fullname, setFullName] = useState('');
+    //Template
     const desc = 'Issue: \nWhen did it start: \nHave you tried any troubleshooting steps: \nAdditional notes: ';
 
-    useEffect(() => {
-        if (error || success) {
-            const timer = setTimeout(() => {
-                setError('');
-                setSuccess('');
-            }, 3000);
-            return () => clearTimeout(timer);
-        }
-    }, [error, success]);
-
-    useEffect(() => {
-        const empInfo = JSON.parse(localStorage.getItem('user'));
-        const Fullname = empInfo.user_name;
-        setCurrentUser(Fullname);
-
-        const first = empInfo.emp_FirstName.charAt(0).toUpperCase() + empInfo.emp_FirstName.slice(1).toLowerCase();
-        const last = empInfo.emp_LastName.charAt(0).toUpperCase() + empInfo.emp_LastName.slice(1).toLowerCase();
-        setFullName(first + ' ' + last);
-    }, []);
-
+    //All Sub-cateogry
     const subCategoryOptions = {
         hardware: [
             "Desktop",
@@ -76,7 +62,7 @@ export default function CreateTicketHD() {
             "Network Security (Intrusion Detection/Prevention)",
             "Bandwidth Issues",
         ],
-        software: [
+        application: [
             "Microsoft Applications (Excel, Word, Outlook, PowerPoint, Teams)",
             "Email (Setup, Creation, Error, Backup)",
             "Active Directory (User Creation, Login, Password)",
@@ -103,6 +89,68 @@ export default function CreateTicketHD() {
         ]
     };
 
+    //Drop down styles
+    const customSelectStyles = {
+        container: (provided) => ({
+            ...provided,
+            width: '100%',
+        }),
+        control: (provided, state) => ({
+            ...provided,
+            minHeight: '43px',
+            border: state.isFocused ? '2px solid #fdc10dff' : `2px solid ${provided.borderColor}`,
+            boxShadow: state.isFocused ? '1px rgba(253, 169, 13, 1)' : provided.boxShadow,
+            '&:hover': { borderColor: '#fdc10dff' },
+        }),
+        valueContainer: (provided) => ({
+            ...provided,
+            paddingTop: '0px',
+            paddingBottom: '0px',
+        }),
+        multiValue: (provided) => ({
+            ...provided,
+            backgroundColor: '#f1f1f1',
+            borderRadius: '4px',
+            padding: '1px 4px',
+        }),
+        multiValueLabel: (provided) => ({
+            ...provided,
+            fontSize: '0.85rem',
+            color: '#333',
+        }),
+        multiValueRemove: (provided) => ({
+            ...provided,
+            color: '#999',
+            ':hover': {
+                backgroundColor: '#ffcccc',
+                color: '#ff0000',
+            },
+        }),
+    };
+
+    //Alert state 3s
+    useEffect(() => {
+        if (error || success) {
+            const timer = setTimeout(() => {
+                setError('');
+                setSuccess('');
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [error, success]);
+
+    //Setting usernames 
+    useEffect(() => {
+        const empInfo = JSON.parse(localStorage.getItem('user'));
+        const Fullname = empInfo.user_name;
+        setCurrentUser(Fullname);
+
+        const first = empInfo.emp_FirstName.charAt(0).toUpperCase() + empInfo.emp_FirstName.slice(1).toLowerCase();
+        const last = empInfo.emp_LastName.charAt(0).toUpperCase() + empInfo.emp_LastName.slice(1).toLowerCase();
+        setFullName(first + ' ' + last);
+    }, []);
+
+    //Changes Function
     const handleChange = (e) => {
         const { name, value, files } = e.target;
 
@@ -124,6 +172,7 @@ export default function CreateTicketHD() {
         }
     };
 
+    //Save Function
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
@@ -193,8 +242,35 @@ export default function CreateTicketHD() {
         }
     };
 
+    //Get all assets
+    useEffect(() => {
+        const fetch = async () => {
+            try {
+                const res = await axios.get(`${config.baseApi}/pms/get-all-pms`);
+                const data = res.data || [];
+                const active = data.filter(a => a.is_active === "1")
+
+                const allAssets = active.map(e => e.tag_id);
+
+                setAssets(active)
+                console.log(allAssets)
+            } catch (err) {
+                console.log('Unable to get all assets: ', err)
+            }
+        }
+        fetch();
+    }, [])
+
+    //Drop down format
+    const options = assets.map(asset => ({
+        value: asset.tag_id,
+        label: asset.tag_id,
+        category: asset.pms_category
+    }));
+
     return (
-        <Container fluid className="pt-100" style={{ background: 'linear-gradient(to bottom, #ffe798ff, #b8860b)', minHeight: '100vh', paddingTop: '100px' }}>
+        <Container fluid className="d-flex align-items-center justify-content-center" style={{ background: 'linear-gradient(to bottom, #ffe798ff, #b8860b)', minHeight: '100vh', paddingTop: '100px' }}>
+            {/* Alert Component */}
             {error && (
                 <div className="position-fixed start-50 translate-middle-x" style={{ top: '100px', zIndex: 9999, minWidth: '300px' }}>
                     <Alert variant="danger" onClose={() => setError('')} dismissible>{error}</Alert>
@@ -221,7 +297,28 @@ export default function CreateTicketHD() {
                 <Row className="justify-content-center">
                     <Col xs={12} md={10} lg={8}>
                         <Card className="p-4 shadow-sm">
-                            <h4 className="mb-3">Create Ticket</h4>
+                            <div ref={containerRef} className="mb-3">
+                                {/* <VariableProximity
+                                    label={'Create Support Ticket'}
+                                    className={'variable-proximity-demo'}
+                                    style={{
+                                        fontSize: '1.5rem', // responsive font size
+                                        color: "#2e2e2eff"
+                                    }}
+                                    fromFontVariationSettings="'wght' 800, 'opsz' 9"
+                                    toFontVariationSettings="'wght' 2000, 'opsz' 30"
+                                    containerRef={containerRef}
+                                    radius={50}
+                                    falloff="linear"
+                                /> */}
+                                <h3 style={{
+                                    fontSize: '1.5rem', // responsive font size
+                                    color: "#272727ff"
+                                }}
+                                ><b>Create Support Ticket</b>
+                                </h3>
+                            </div>
+
                             <Form onSubmit={handleSubmit}>
                                 <Row className="mb-3">
                                     <Col xs={12} md={6}>
@@ -240,11 +337,61 @@ export default function CreateTicketHD() {
                                     <Col xs={12} md={6}>
                                         <Form.Group>
                                             <Form.Label>Tag ID <span className="fw-light">(optional)</span></Form.Label>
-                                            <Form.Control
-                                                type="text"
-                                                name="tag_id"
-                                                value={formData.tag_id}
-                                                onChange={handleChange}
+                                            <CreatableSelect
+                                                options={options}
+                                                styles={customSelectStyles}
+                                                value={
+                                                    options.find(opt => opt.value === formData.tag_id) ||
+                                                    (formData.tag_id ? { value: formData.tag_id, label: formData.tag_id } : null)
+                                                }
+                                                onChange={(selectedOption) => {
+                                                    setFormData({
+                                                        ...formData,
+                                                        tag_id: selectedOption ? selectedOption.value : '',
+                                                    });
+
+                                                    if (validationErrors.tag_id) {
+                                                        setValidationErrors(prev => {
+                                                            const updated = { ...prev };
+                                                            delete updated.tag_id;
+                                                            return updated;
+                                                        });
+                                                    }
+                                                }}
+                                                onCreateOption={(inputValue) => {
+                                                    const newOption = { value: inputValue, label: inputValue };
+                                                    setFormData({ ...formData, tag_id: inputValue });
+                                                }}
+                                                isClearable
+                                                placeholder="Type or select..."
+                                                formatOptionLabel={(option, { context }) => (
+                                                    <div
+                                                        style={{
+                                                            display: 'flex',
+                                                            justifyContent: 'space-between',
+                                                            alignItems: 'center',
+                                                            width: '100%',
+                                                        }}
+                                                    >
+                                                        {/* Left: Tag ID */}
+                                                        <span>{option.label}</span>
+
+                                                        {/* Right: Category (only show for dropdown, not selected value) */}
+                                                        {context === 'menu' && (
+                                                            <span
+                                                                style={{
+                                                                    color: '#6c757d',
+                                                                    fontSize: '0.9em',
+                                                                    textAlign: 'right',
+                                                                    flexShrink: 0,
+                                                                    minWidth: '100px',
+                                                                }}
+                                                            >
+                                                                {option.category}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                )}
                                             />
                                         </Form.Group>
                                     </Col>
@@ -266,7 +413,7 @@ export default function CreateTicketHD() {
                                                 onChange={handleChange}
                                                 isInvalid={!!validationErrors.ticket_urgencyLevel}
                                             >
-                                                <option value="">Select</option>
+
                                                 <option value="low">Low</option>
                                                 <option value="medium">Medium</option>
                                                 <option value="high">High</option>
@@ -290,7 +437,7 @@ export default function CreateTicketHD() {
                                                 <option value="">Select</option>
                                                 <option value="hardware">Hardware</option>
                                                 <option value="network">Network</option>
-                                                <option value="software">Software</option>
+                                                <option value="application">Application</option>
                                                 <option value="system">System</option>
                                             </Form.Select>
                                             <Form.Control.Feedback type="invalid">{validationErrors.ticket_category}</Form.Control.Feedback>

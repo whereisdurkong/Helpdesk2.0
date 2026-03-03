@@ -21,6 +21,8 @@ import AllTicketbyTypeOwn from "views/report/allticketbytypeown";
 import AllTicketSCAT from "views/report/allticketSCAT";
 import GetAllByCategoryOwn from "views/report/getallbycategoryown";
 import AllDataOwn from "views/report/alldataown";
+import AnimatedContent from "layouts/ReactBits/AnimatedContent";
+import { useNavigate } from 'react-router';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -28,7 +30,7 @@ export default function HDDashboard() {
     const [filterType, setFilterType] = useState("all");
     const [selectUserState, setSelectUserState] = useState(false)
     const [stats, setStats] = useState([]);
-
+    const navigate = useNavigate();
     const [getAllHD, setGetAllHD] = useState([]);
     const [selectedHD, setSelectedHD] = useState("")
 
@@ -56,7 +58,7 @@ export default function HDDashboard() {
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
     const currentItems = ownTicket.slice(indexOfFirstItem, indexOfLastItem);
 
-    //Modal
+    //Modal Content setter
     const openModal = (title, content) => {
         setModalTitle(title);
         setModalContent(content);
@@ -134,7 +136,6 @@ export default function HDDashboard() {
                             <th>ID</th>
                             <th>Problem / Issue</th>
                             <th>Status</th>
-                            {/* <th>Type</th> */}
                             <th>Assigned To</th>
                             <th>For</th>
                             <th>Created At</th>
@@ -146,12 +147,11 @@ export default function HDDashboard() {
                                 <tr
                                     key={ticket.ticket_id}
                                     style={{ cursor: "pointer" }}
-                                    onClick={() => window.location.replace(`view-hd-ticket?id=${ticket.ticket_id}`)}
+                                    onClick={() => navigate(`/view-hd-ticket?id=${ticket.ticket_id}`)}
                                 >
                                     <td>{ticket.ticket_id}</td>
                                     <td>{ticket.ticket_subject}</td>
                                     <td>{ticket.ticket_status}</td>
-                                    {/* <td>{ticket.ticket_type}</td> */}
                                     <td>{ticket.assigned_to}</td>
                                     <td>{ticket.ticket_for}</td>
                                     <td>{new Date(ticket.created_at).toLocaleString()}</td>
@@ -191,10 +191,11 @@ export default function HDDashboard() {
         );
     };
 
-
+    // Filter || setting data for tables
     useEffect(() => {
         if (!allTickets.length) return;
 
+        // Date Filter
         const now = new Date();
         const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const startOfWeek = new Date(now);
@@ -296,34 +297,8 @@ export default function HDDashboard() {
 
         setStats(result);
 
-        // Chart counts
-        const incidentCount = filtered.filter(i => i.ticket_type === 'incident').length;
-        const requestCount = filtered.filter(r => r.ticket_type === 'request').length;
-        const inquiryCount = filtered.filter(q => q.ticket_type === 'inquiry').length;
 
-        setChartData({
-            labels: ['Incident', 'Request', 'Inquiry'],
-            datasets: [
-                {
-                    label: 'Number of Tickets',
-                    data: [incidentCount, requestCount, inquiryCount],
-                    backgroundColor: [
-                        'rgba(255, 99, 132, 0.5)',
-                        'rgba(54, 162, 235, 0.5)',
-                        'rgba(255, 206, 86, 0.5)'
-                    ],
-                    borderColor: [
-                        'rgba(255, 99, 132, 1)',
-                        'rgba(54, 162, 235, 1)',
-                        'rgba(255, 206, 86, 1)'
-                    ],
-                    borderWidth: 1
-                }
-            ]
-        });
     }, [filterType, allTickets, selectedHD]);
-
-
 
     return (
         <Container fluid className="pt-100 px-3 px-md-5"
@@ -333,250 +308,267 @@ export default function HDDashboard() {
                 paddingTop: "100px",
                 paddingBottom: "20px",
             }}>
-            <Row className="align-items-center mb-4">
-                <Col xs={12} md={4} lg={3}>
-                    <h2 className="mb-0"><b>Dashboard</b></h2>
-                </Col>
 
-                <Col xs={12} md={8} lg={9}>
-                    <div className="d-flex justify-content-md-end flex-wrap gap-3">
-                        <Form.Group controlId="filterType1">
-                            <Form.Select
-                                value={filterType}
-                                onChange={(e) => setFilterType(e.target.value)}
-                                style={{ minWidth: "180px" }}
-                            >
-                                <option value="all">All</option>
-                                <option value="today">Today</option>
-                                <option value="thisWeek">This Week</option>
-                                <option value="lastWeek">Last Week</option>
-                                <option value="thisMonth">This Month</option>
-                                <option value="perMonth">Per Month</option>
-                                <option value="perYear">Per Year</option>
-                            </Form.Select>
-                        </Form.Group>
-                        {selectUserState && (
-                            <Form.Group controlId="selectUser">
+            <AnimatedContent
+                distance={100}
+                direction="vertical"
+                reverse={true}
+                duration={0.8}
+                ease="power3.out"
+                initialOpacity={0}
+                animateOpacity
+                scale={1.0}
+                threshold={0.1}
+                delay={0}
+            >
+                <Row className="align-items-center mb-4">
+                    <Col xs={12} md={4} lg={3}>
+                        <h2 className="mb-0"><b>Dashboard</b></h2>
+                    </Col>
+
+                    <Col xs={12} md={8} lg={9}>
+                        <div className="d-flex justify-content-md-end flex-wrap gap-3">
+                            {/* Date Filter */}
+                            <Form.Group controlId="filterType1">
                                 <Form.Select
-                                    value={selectedHD}
-                                    onChange={(e) => setSelectedHD(e.target.value)}
+                                    value={filterType}
+                                    onChange={(e) => setFilterType(e.target.value)}
                                     style={{ minWidth: "180px" }}
                                 >
-                                    {getAllHD.map((hd) => (
-                                        <option key={hd.user_name} value={hd.user_name}>
-                                            {hd.user_name}
-                                        </option>
-                                    ))}
-
+                                    <option value="all">All</option>
+                                    <option value="today">Today</option>
+                                    <option value="thisWeek">This Week</option>
+                                    <option value="lastWeek">Last Week</option>
+                                    <option value="thisMonth">This Month</option>
+                                    <option value="perMonth">Per Month</option>
+                                    <option value="perYear">Per Year</option>
                                 </Form.Select>
                             </Form.Group>
-                        )}
-                    </div>
-                </Col>
-            </Row>
-
-
-            {/* Clickable Open / Not Reviewed / Closed cards */}
-            <Row style={{ paddingBottom: '20px' }}>
-                <Col>
-                    <div
-                        className="bento-item-top"
-                        style={{ cursor: "pointer" }}
-                        onClick={() => openModal(
-                            "All Open Tickets",
-                            <TicketsTable tickets={filteredTickets.filter(t => (t.ticket_status === 'in-progress' || t.ticket_status === 'assigned' || t.ticket_status === 're-opened') &&
-                                (t.assigned_to === selectedHD && t.is_active === true))} />
-                        )}
-                    >
-                        <div style={{ background: '#004e0dff', borderRadius: '5px 5px 0 0', color: '#fff', padding: '5px', textAlign: 'center' }}>
-                            <b>Tickets</b>
-                        </div>
-                        <div style={{ textAlign: 'center', paddingTop: '10px' }}>
-                            <h1>{open}</h1>
-                        </div>
-                    </div>
-                </Col>
-                <Col>
-                    <div
-                        className="bento-item-top"
-                        style={{ cursor: "pointer" }}
-                        onClick={() => openModal(
-                            "Not Reviewed Tickets",
-                            <TicketsTable tickets={filteredTickets.filter(t => t.is_reviewed === false &&
-                                (t.assigned_to === selectedHD && t.is_active === true) &&
-                                (t.ticket_status === 'closed' || t.ticket_status === 'resolved'))} />
-                        )}
-                    >
-                        <div style={{ background: '#004e0dff', borderRadius: '5px 5px 0 0', color: '#fff', padding: '5px', textAlign: 'center' }}>
-                            <b>Not Reviewed</b>
-                        </div>
-                        <div style={{ textAlign: 'center', paddingTop: '10px' }}>
-                            <h1>{notReviewed}</h1>
-                        </div>
-                    </div>
-                </Col>
-                <Col>
-                    <div
-                        className="bento-item-top"
-                        style={{ cursor: "pointer" }}
-                        onClick={() => openModal(
-                            "Closed Tickets",
-                            <TicketsTable tickets={filteredTickets.filter(t => t.ticket_status === 'open' && t.is_active === true)} />
-                        )}
-                    >
-                        <div style={{ background: '#004e0dff', borderRadius: '5px 5px 0 0', color: '#fff', padding: '5px', textAlign: 'center' }}>
-                            <b>Open Tickets</b>
-                        </div>
-                        <div style={{ textAlign: 'center', paddingTop: '10px' }}>
-                            <h1>{closed}</h1>
-                        </div>
-                    </div>
-                </Col>
-            </Row>
-
-            {/* Table and Subcategory Chart */}
-            <Row style={{ paddingBottom: '20px' }}>
-                <Col xs={8}>
-                    <div className="bento-item bento-users">
-                        <div>
-                            <table border="1" cellPadding="5" style={{ borderCollapse: "collapse", width: '100%' }}>
-                                <thead style={{ background: '#053b00ff', color: 'white' }}>
-                                    <tr>
-                                        <th>Ticket ID</th>
-                                        <th>Problem/Issue</th>
-                                        <th>Status</th>
-                                        <th>Level</th>
-                                        <th>Ticket For</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {currentItems.length > 0 ? (
-                                        currentItems.map(e => (
-                                            <tr key={e.ticket_id}
-                                                style={{ cursor: "pointer" }}
-                                                onClick={() => window.location.replace(`view-hd-ticket?id=${e.ticket_id}`)}
-                                            >
-                                                <td>{e.ticket_id}</td>
-                                                <td>{e.ticket_subject}</td>
-                                                <td>{e.ticket_status}</td>
-                                                <td>{e.ticket_urgencyLevel}</td>
-                                                <td>
-                                                    {`${e.ticket_for.charAt(0).toUpperCase() + e.ticket_for.slice(1).toLowerCase()}`}
-                                                </td>
-                                            </tr>
-                                        ))
-                                    ) : (
-                                        <tr>
-                                            <td colSpan="5" style={{ textAlign: "center" }}>No Tickets Found</td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                            {/* Pagination controls */}
-                            {totalPages > 1 && (
-                                <div className="d-flex justify-content-center mt-3">
-                                    <Pagination
-                                        className="tickets-pagination"
-                                        style={{
-                                            "--bs-pagination-active-bg": "#053b00ff",
-                                            "--bs-pagination-active-border-color": "#053b00ff",
-                                            "--bs-pagination-color": "#053b00ff"
-                                        }}
+                            {/* All Helpdesk Users Option */}
+                            {selectUserState && (
+                                <Form.Group controlId="selectUser">
+                                    <Form.Select
+                                        value={selectedHD}
+                                        onChange={(e) => setSelectedHD(e.target.value)}
+                                        style={{ minWidth: "180px" }}
                                     >
-                                        <Pagination.First onClick={() => setCurrentPage(1)} disabled={currentPage === 1} />
-                                        <Pagination.Prev onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} />
-
-                                        {Array.from({ length: totalPages }, (_, i) => (
-                                            <Pagination.Item
-                                                key={i + 1}
-                                                active={i + 1 === currentPage}
-                                                onClick={() => setCurrentPage(i + 1)}
-                                            >
-                                                {i + 1}
-                                            </Pagination.Item>
+                                        {getAllHD.map((hd) => (
+                                            <option key={hd.user_name} value={hd.user_name}>
+                                                {hd.user_name}
+                                            </option>
                                         ))}
 
-                                        <Pagination.Next onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} />
-                                        <Pagination.Last onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages} />
-                                    </Pagination>
-                                </div>
+                                    </Form.Select>
+                                </Form.Group>
                             )}
-
                         </div>
-                    </div>
-                </Col>
+                    </Col>
+                </Row>
 
-                <Col>
-                    <div
-                        className="bento-item-header"
-                        onClick={() =>
-                            openModal(
-                                "Ticket Summary",
-                                <AllTicketSCAT filterType={filterType} showChart={false} helpdesk={selectedHD} />
-                            )
-                        }
-                    >
+
+                {/* Clickable Open / Not Reviewed / Closed cards */}
+                <Row style={{ paddingBottom: '20px' }}>
+                    {/* All Tickets */}
+                    <Col>
                         <div
-                            style={{
-                                background: "#004e0dff",
-                                borderRadius: "5px 5px 0 0",
-                                color: "#fff",
-                                padding: "10px",
-                                textAlign: "center",
-                                display: "flex",           // row layout
-                                justifyContent: "center",  // center horizontally
-                                alignItems: "center",      // align vertically
-                                gap: "8px"                 // space between h4 and h6
-                            }}
+                            className="bento-item-top"
+                            style={{ cursor: "pointer" }}
+                            onClick={() => openModal(
+                                `All Tickets`,
+                                <TicketsTable tickets={filteredTickets.filter(t => (t.ticket_status === 'in-progress' || t.ticket_status === 'assigned' || t.ticket_status === 're-opened') &&
+                                    (t.assigned_to === selectedHD && t.is_active === true))} />
+                            )}
                         >
-                            <h5 style={{ margin: 0, color: "#fff" }}><b>CSAT</b></h5>
-                            <h6 style={{ margin: 0, color: "#fff" }}>(Customer Satisfaction Score)</h6>
+                            <div style={{ background: '#004e0dff', borderRadius: '5px 5px 0 0', color: '#fff', padding: '5px', textAlign: 'center' }}>
+                                <b>Tickets</b>
+                            </div>
+                            <div style={{ textAlign: 'center', paddingTop: '10px' }}>
+                                <h1>{open || '0'}</h1>
+                            </div>
                         </div>
-
-                        <div className="bento-chart-wrapper" style={{ height: "100%" }}>
-                            <AllTicketSCAT filterType={filterType} showChart={true} helpdesk={selectedHD} />
-                        </div>
-                    </div>
-                </Col>
-
-            </Row>
-
-            {/* Other Charts */}
-            <Row className="g-3">
-                <Col xs={12} md={4}>
-                    <div
-                        className="bento-item-header"
-                        onClick={() =>
-                            openModal(
-                                "Tickets by Location",
-                                <AllDataOwn filterType={filterType} showChart={false} helpdesk={selectedHD} />
-                            )
-                        }
-                    >
+                    </Col>
+                    {/* Not-reviewed */}
+                    <Col>
                         <div
-                            style={{
-                                background: "#004e0dff",
-                                borderRadius: "5px 5px 0 0",
-                                color: "#fff",
-                                padding: "10px",
-                                textAlign: "center",
-                                display: "flex",           // row layout
-                                justifyContent: "center",  // center horizontally
-                                alignItems: "center",      // align vertically
-
-                            }}
+                            className="bento-item-top"
+                            style={{ cursor: "pointer" }}
+                            onClick={() => openModal(
+                                "Not Reviewed Tickets",
+                                <TicketsTable tickets={filteredTickets.filter(t => t.is_reviewed === false &&
+                                    (t.assigned_to === selectedHD && t.is_active === true) &&
+                                    (t.ticket_status === 'closed' || t.ticket_status === 'resolved'))} />
+                            )}
                         >
-                            <h5 style={{ margin: 0, color: "#fff" }}><b>Ticket Completion Rate</b></h5>
+                            <div style={{ background: '#004e0dff', borderRadius: '5px 5px 0 0', color: '#fff', padding: '5px', textAlign: 'center' }}>
+                                <b>Not Reviewed</b>
+                            </div>
+                            <div style={{ textAlign: 'center', paddingTop: '10px' }}>
+                                <h1>{notReviewed || '0'}</h1>
+                            </div>
                         </div>
-
-                        <div className="bento-chart-wrapper" style={{ height: "100%" }}>
-                            <AllDataOwn filterType={filterType} showChart={true} helpdesk={selectedHD} />
+                    </Col>
+                    {/* Open */}
+                    <Col>
+                        <div
+                            className="bento-item-top"
+                            style={{ cursor: "pointer" }}
+                            onClick={() => openModal(
+                                "Closed Tickets",
+                                <TicketsTable tickets={filteredTickets.filter(t => t.ticket_status === 'open' && t.is_active === true)} />
+                            )}
+                        >
+                            <div style={{ background: '#004e0dff', borderRadius: '5px 5px 0 0', color: '#fff', padding: '5px', textAlign: 'center' }}>
+                                <b>Open Tickets</b>
+                            </div>
+                            <div style={{ textAlign: 'center', paddingTop: '10px' }}>
+                                <h1>{closed || '0'}</h1>
+                            </div>
                         </div>
+                    </Col>
+                </Row>
+
+                {/* Table and Subcategory Chart */}
+                <Row style={{ paddingBottom: '20px' }}>
+                    <Col xs={8}>
+                        <div className="bento-item bento-users">
+                            <div>
+                                <table border="1" cellPadding="5" style={{ borderCollapse: "collapse", width: '100%' }}>
+                                    <thead style={{ background: '#053b00ff', color: 'white' }}>
+                                        <tr>
+                                            <th>Ticket ID</th>
+                                            <th>Problem/Issue</th>
+                                            <th>Status</th>
+                                            <th>Level</th>
+                                            <th>Ticket For</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {currentItems.length > 0 ? (
+                                            currentItems.map(e => (
+                                                <tr key={e.ticket_id}
+                                                    style={{ cursor: "pointer" }}
+                                                    onClick={() => navigate(`/view-hd-ticket?id=${e.ticket_id}`)}
+                                                >
+                                                    <td>{e.ticket_id}</td>
+                                                    <td>{e.ticket_subject}</td>
+                                                    <td>{e.ticket_status}</td>
+                                                    <td>{e.ticket_urgencyLevel}</td>
+                                                    <td>
+                                                        {`${e.ticket_for.charAt(0).toUpperCase() + e.ticket_for.slice(1).toLowerCase()}`}
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        ) : (
+                                            <tr>
+                                                <td colSpan="5" style={{ textAlign: "center" }}>No Tickets Found</td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                                {/* Pagination controls */}
+                                {totalPages > 1 && (
+                                    <div className="d-flex justify-content-center mt-3">
+                                        <Pagination
+                                            className="tickets-pagination"
+                                            style={{
+                                                "--bs-pagination-active-bg": "#053b00ff",
+                                                "--bs-pagination-active-border-color": "#053b00ff",
+                                                "--bs-pagination-color": "#053b00ff"
+                                            }}
+                                        >
+                                            <Pagination.First onClick={() => setCurrentPage(1)} disabled={currentPage === 1} />
+                                            <Pagination.Prev onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} />
+
+                                            {Array.from({ length: totalPages }, (_, i) => (
+                                                <Pagination.Item
+                                                    key={i + 1}
+                                                    active={i + 1 === currentPage}
+                                                    onClick={() => setCurrentPage(i + 1)}
+                                                >
+                                                    {i + 1}
+                                                </Pagination.Item>
+                                            ))}
+
+                                            <Pagination.Next onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} />
+                                            <Pagination.Last onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages} />
+                                        </Pagination>
+                                    </div>
+                                )}
+
+                            </div>
+                        </div>
+                    </Col>
+
+                    {/* CSAT */}
+                    <Col>
+                        <div
+                            className="bento-item-header"
+                            onClick={() =>
+                                openModal(
+                                    "Ticket Summary",
+                                    <AllTicketSCAT filterType={filterType} showChart={false} helpdesk={selectedHD} />
+                                )}>
+                            <div
+                                style={{
+                                    background: "#004e0dff",
+                                    borderRadius: "5px 5px 0 0",
+                                    color: "#fff",
+                                    padding: "10px",
+                                    textAlign: "center",
+                                    display: "flex",           // row layout
+                                    justifyContent: "center",  // center horizontally
+                                    alignItems: "center",      // align vertically
+                                    gap: "8px"                 // space between h4 and h6
+                                }}
+                            >
+                                <h5 style={{ margin: 0, color: "#fff" }}><b>CSAT</b></h5>
+                                <h6 style={{ margin: 0, color: "#fff" }}>(Customer Satisfaction Score)</h6>
+                            </div>
+
+                            <div className="bento-chart-wrapper" style={{ height: "100%" }}>
+                                <AllTicketSCAT filterType={filterType} showChart={true} helpdesk={selectedHD} />
+                            </div>
+                        </div>
+                    </Col>
+
+                </Row>
+
+                <Row className="g-2">
+                    {/* Ticket Completion Rate */}
+                    <Col xs={12} md={4}>
+                        <div
+                            className="bento-item-header"
+                            onClick={() =>
+                                openModal(
+                                    "Tickets by Location",
+                                    <AllDataOwn filterType={filterType} showChart={false} helpdesk={selectedHD} />
+                                )
+                            }
+                        >
+                            <div
+                                style={{
+                                    background: "#004e0dff",
+                                    borderRadius: "5px 5px 0 0",
+                                    color: "#fff",
+                                    padding: "10px",
+                                    textAlign: "center",
+                                    display: "flex",           // row layout
+                                    justifyContent: "center",  // center horizontally
+                                    alignItems: "center",      // align vertically
+
+                                }}
+                            >
+                                <h5 style={{ margin: 0, color: "#fff" }}><b>Ticket Completion Rate</b></h5>
+                            </div>
+
+                            <div className="bento-chart-wrapper" style={{ height: "100%" }}>
+                                <AllDataOwn filterType={filterType} showChart={true} helpdesk={selectedHD} />
+                            </div>
 
 
-                    </div>
-                </Col>
-                {/* <Col xs={12} md={4}>
+                        </div>
+                    </Col>
+                    {/* <Col xs={12} md={4}>
                     <div
                         className="bento-item bento-users"
                         onClick={() =>
@@ -590,33 +582,33 @@ export default function HDDashboard() {
                     </div>
                 </Col> */}
 
-                <Col xs={12} md={8}>
-                    <div
-                        className="bento-item bento-users"
-                        onClick={() =>
-                            openModal(
-                                "All Tickets by Category",
-                                <GetAllByCategoryOwn filterType={filterType} showChart={false} helpdesk={selectedHD} />
-                            )
-                        }
-                    >
-                        <GetAllByCategoryOwn filterType={filterType} showChart={true} helpdesk={selectedHD} />
-                    </div>
-                </Col>
+                    {/* BY CATEGORY */}
+                    <Col xs={12} md={8}>
+                        <div
+                            className="bento-item bento-users"
+                            onClick={() =>
+                                openModal(
+                                    "All Tickets by Category",
+                                    <GetAllByCategoryOwn filterType={filterType} showChart={false} helpdesk={selectedHD} />
+                                )
+                            }
+                        >
+                            <GetAllByCategoryOwn filterType={filterType} showChart={true} helpdesk={selectedHD} />
+                        </div>
+                    </Col>
+                </Row>
 
-
-            </Row>
-
-            {/* Modal */}
-            <Modal show={showModal} onHide={() => setShowModal(false)} size="xl" centered>
-                <Modal.Header closeButton>
-                    <Modal.Title>{modalTitle}</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>{modalContent}</Modal.Body>
-                <Modal.Footer>
-                    <Button variant="secondary" onClick={() => setShowModal(false)}>Close</Button>
-                </Modal.Footer>
-            </Modal>
+                {/* Modal */}
+                <Modal show={showModal} onHide={() => setShowModal(false)} size="xl" centered>
+                    <Modal.Header closeButton>
+                        <Modal.Title>{modalTitle}</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>{modalContent}</Modal.Body>
+                    <Modal.Footer>
+                        <Button variant="secondary" onClick={() => setShowModal(false)}>Close</Button>
+                    </Modal.Footer>
+                </Modal>
+            </AnimatedContent>
         </Container>
     );
 }
